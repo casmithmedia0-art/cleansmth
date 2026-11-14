@@ -66,14 +66,6 @@
   /* Premium shimmer */
   #home-page .pkg-card.featured::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.03),transparent);mix-blend-mode:overlay;pointer-events:none;animation:shimmer 4s linear infinite}
   @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-  /* BEFORE/AFTER SLIDER */
-  #home-page .ba-slider{position:relative;border-radius:10px;overflow:hidden;height:100%;min-height:0}
-  #home-page .ba-slider img{width:100%;height:100%;object-fit:cover;display:block}
-  #home-page .ba-after-wrap{position:absolute;inset:0;overflow:hidden}
-  #home-page .ba-after-img{position:absolute;left:0;top:0;height:100%;width:50%;object-fit:cover}
-  #home-page .ba-handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(0,0,0,.4);z-index:4;cursor:ew-resize}
-  #home-page .ba-handle:after{content:'◀ ▶';color:var(--navy);font-weight:700}
-  #home-page .ba-label{position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,.5);padding:8px 12px;border-radius:6px;font-size:.85rem}
   /* TESTIMONIALS */
   #home-page .testi-track-wrap{width:100%;overflow-x:auto;margin-top:40px;padding:10px 0}
   #home-page .testi-track{display:flex;gap:20px;padding:10px 0;width:fit-content}
@@ -81,6 +73,7 @@
   #home-page .testi-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(90deg,var(--cyan),#67f2ff);display:flex;align-items:center;justify-content:center;color:var(--navy);font-weight:800}
   #home-page .testi-subratings{display:flex;gap:8px;margin-top:8px}
   #home-page .pill{background:rgba(255,255,255,.04);padding:6px 8px;border-radius:999px;font-size:.8rem;color:var(--white-text)}
+  #home-page .google-reviews-link{display:inline-block;margin-top:20px;text-decoration:none}
   /* GALLERY */
   #home-page .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:24px;align-items:start}
   #home-page .gallery-item{overflow:hidden;border-radius:10px;background:rgba(255,255,255,0.02)}

@@ -93,8 +93,6 @@ export const fallbackMemberships = [
 export const fallbackCarWashGallery = [
   { title: "Bike detailing", alt_text: "Motorbike detail", media_url: "/bike.jpeg", media_type: "image", service_slug: "car-wash" },
   { title: "Bike detail angle", alt_text: "Motorbike detail from another angle", media_url: "/bike2.jpeg", media_type: "image", service_slug: "car-wash" },
-  { title: "Before the detail", alt_text: "Vehicle before detailing", media_url: "/before&after.jpg", media_type: "image", service_slug: "car-wash" },
-  { title: "After the detail", alt_text: "Vehicle after detailing", media_url: "/after.jpeg", media_type: "image", service_slug: "car-wash" },
   { title: "Mobile car wash", alt_text: "CLEANSMITH mobile car wash", media_url: "/clip1.mp4", media_type: "video", service_slug: "car-wash" },
 ];
 
@@ -105,3 +103,27 @@ export const fallbackWorkGallery = [
   { title: "Garden maintenance", alt_text: "Well-maintained green garden", media_url: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1200&q=80", media_type: "image", service_slug: "gardening" },
   { title: "Lawn and garden care", alt_text: "Garden lawn and planted borders", media_url: "https://images.unsplash.com/photo-1599685315640-7ec1c5537b7f?auto=format&fit=crop&w=1200&q=80", media_type: "image", service_slug: "gardening" },
 ];
+
+export function getPageHeroSlides(page) {
+  const additionalSlides = Array.isArray(page.hero_slides)
+    ? page.hero_slides.filter((slide) => slide && typeof slide === "object")
+    : [];
+  const primarySlide = {
+    title: page.hero_title || "",
+    subtitle: page.hero_subtitle || "",
+    image_url: page.hero_image_url || "",
+    cta_text: page.hero_cta_text || "",
+    cta_url: page.hero_cta_url || "",
+  };
+  const slides = primarySlide.image_url || !additionalSlides.length
+    ? [primarySlide, ...additionalSlides]
+    : additionalSlides;
+
+  return slides.map((slide) => ({
+    title: slide.title || primarySlide.title,
+    subtitle: slide.subtitle || primarySlide.subtitle,
+    image_url: slide.image_url || "",
+    cta_text: slide.cta_text || primarySlide.cta_text,
+    cta_url: slide.cta_url || primarySlide.cta_url,
+  }));
+}

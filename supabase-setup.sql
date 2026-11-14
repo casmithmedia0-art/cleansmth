@@ -83,9 +83,13 @@ create table if not exists public.work_gallery (
   title text not null,
   caption text not null default '',
   alt_text text not null default '',
-  media_type text not null check (media_type in ('image', 'video')),
+  media_type text not null check (media_type in ('image', 'video', 'before_after')),
   media_url text not null,
   storage_path text,
+  before_media_url text,
+  after_media_url text,
+  before_storage_path text,
+  after_storage_path text,
   is_published boolean not null default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
@@ -95,10 +99,23 @@ create table if not exists public.work_gallery (
 alter table public.work_gallery
   add column if not exists service_slug text not null default 'car-wash';
 alter table public.work_gallery
+  add column if not exists before_media_url text;
+alter table public.work_gallery
+  add column if not exists after_media_url text;
+alter table public.work_gallery
+  add column if not exists before_storage_path text;
+alter table public.work_gallery
+  add column if not exists after_storage_path text;
+alter table public.work_gallery
   drop constraint if exists work_gallery_service_slug_check;
 alter table public.work_gallery
   add constraint work_gallery_service_slug_check
   check (service_slug in ('car-wash', 'home-cleaning', 'gardening'));
+alter table public.work_gallery
+  drop constraint if exists work_gallery_media_type_check;
+alter table public.work_gallery
+  add constraint work_gallery_media_type_check
+  check (media_type in ('image', 'video', 'before_after'));
 
 create table if not exists public.site_pages (
   id uuid primary key default gen_random_uuid(),
@@ -107,6 +124,9 @@ create table if not exists public.site_pages (
   hero_subtitle text not null default '',
   intro text not null default '',
   hero_image_url text not null default '',
+  hero_cta_text text not null default '',
+  hero_cta_url text not null default '',
+  hero_slides jsonb not null default '[]'::jsonb check (jsonb_typeof(hero_slides) = 'array'),
   section_title text not null default 'Our services',
   services jsonb not null default '[]'::jsonb check (jsonb_typeof(services) = 'array'),
   callout_title text not null default '',
@@ -124,6 +144,17 @@ alter table public.site_pages
   add column if not exists intro text not null default '';
 alter table public.site_pages
   add column if not exists hero_image_url text not null default '';
+alter table public.site_pages
+  add column if not exists hero_cta_text text not null default '';
+alter table public.site_pages
+  add column if not exists hero_cta_url text not null default '';
+alter table public.site_pages
+  add column if not exists hero_slides jsonb not null default '[]'::jsonb;
+alter table public.site_pages
+  drop constraint if exists site_pages_hero_slides_check;
+alter table public.site_pages
+  add constraint site_pages_hero_slides_check
+  check (jsonb_typeof(hero_slides) = 'array');
 alter table public.site_pages
   add column if not exists section_title text not null default 'Our services';
 alter table public.site_pages

@@ -180,8 +180,56 @@
     });
   }
 
+  function formatHeroSlides(slides) {
+    return (slides || []).map(function (slide) {
+      return [
+        slide.title || '',
+        slide.subtitle || '',
+        slide.image_url || '',
+        slide.cta_text || '',
+        slide.cta_url || ''
+      ].join(' | ');
+    }).join('\n');
+  }
+
+  function parseHeroSlides(value, serializedSlides) {
+    var previousSlides;
+    try {
+      previousSlides = JSON.parse(serializedSlides || '[]');
+    } catch (error) {
+      throw new Error('The saved hero slides could not be read. Refresh the dashboard and try again.');
+    }
+    if (!Array.isArray(previousSlides)) {
+      throw new Error('The saved hero slides are invalid. Refresh the dashboard and try again.');
+    }
+
+    return lines(value).map(function (line, index) {
+      var fields = line.split('|').map(function (field) { return field.trim(); });
+      var imageUrl = fields[2] || '';
+      if (fields.length < 3 || !fields[0] || !fields[1] || !imageUrl) {
+        throw new Error('Hero slide line ' + (index + 1) + ' needs a title, subtitle, and image URL separated by |.');
+      }
+      if (!/^https?:\/\//i.test(imageUrl) && !/^\/(?!\/)/.test(imageUrl)) {
+        throw new Error('Hero slide line ' + (index + 1) + ' has an invalid image URL.');
+      }
+      var previous = previousSlides.find(function (slide) { return slide.image_url === imageUrl; });
+      return {
+        title: fields[0],
+        subtitle: fields[1],
+        image_url: imageUrl,
+        cta_text: fields[3] || '',
+        cta_url: fields[4] || '',
+        storage_path: previous ? previous.storage_path || null : null
+      };
+    });
+  }
+
   function editSitePage(form, page) {
-    editForm(form, Object.assign({}, page, { services_text: formatSiteServices(page.services) }), {
+    editForm(form, Object.assign({}, page, {
+      services_text: formatSiteServices(page.services),
+      hero_slides_text: formatHeroSlides(page.hero_slides),
+      hero_slides_json: JSON.stringify(page.hero_slides || [])
+    }), {
       sort_order: String
     });
   }
@@ -313,23 +361,41 @@
       gardening: 'Gardening'
     };
     data.forEach(function (work) {
-      var preview = work.media_type === 'video' ? make('video') : make('img');
-      preview.src = work.media_url;
+      var preview;
+      if (work.media_type === 'before_after') {
+        preview = make('div', undefined, 'gallery-pair-preview');
+        [work.before_media_url, work.after_media_url].forEach(function (url, index) {
+          var image = make('img');
+          image.src = url || '';
+          image.alt = index ? 'After' : 'Before';
+          preview.appendChild(image);
+        });
+      } else {
+        preview = work.media_type === 'video' ? make('video') : make('img');
+        preview.src = work.media_url;
+      }
       if (work.media_type === 'video') {
         preview.muted = true;
         preview.playsInline = true;
-      } else {
+      } else if (work.media_type !== 'before_after') {
         preview.alt = work.alt_text || work.title;
       }
       card(list, work.title, (serviceNames[work.service_slug] || 'Car wash') + ' · ' +
-        (work.is_published ? 'Published' : 'Hidden') + ' · ' + work.media_type,
-        function () { editForm(document.getElementById('galleryForm'), work, { is_published: String, sort_order: String }); },
+        (work.is_published ? 'Published' : 'Hidden') + ' · ' +
+        (work.media_type === 'before_after' ? 'Before & after' : work.media_type),
+        function () {
+          var form = document.getElementById('galleryForm');
+          editForm(form, work, { is_published: String, sort_order: String });
+          updateGalleryMediaFields(form);
+        },
         function () {
           if (!window.confirm('Delete this gallery item?')) return;
           remove('work_gallery', work.id).then(function () {
-            if (work.storage_path) {
-              return call(client.storage.from('cleansmith-work').remove([work.storage_path]));
-            }
+            return removeStoragePaths([
+              work.storage_path,
+              work.before_storage_path,
+              work.after_storage_path
+            ]);
           }).then(refresh).then(function () {
             message(dashboardStatus, 'Gallery item deleted.');
           }).catch(showError);
@@ -374,9 +440,12 @@
         var selectedPageSlug = formId === 'sitePageForm' ? raw.slug : '';
         delete raw.id;
         var prepared;
+        var uploadedPaths = [];
         var persisted = false;
         Promise.resolve(prepare(raw, form)).then(function (values) {
           prepared = values;
+          uploadedPaths = values._uploaded_paths || [];
+          delete values._uploaded_paths;
           return save(table, id, values);
         }).then(function (record) {
           persisted = true;
@@ -388,12 +457,12 @@
         }).then(function () {
           message(dashboardStatus, 'Saved successfully.');
         }).catch(function (error) {
-          if (!persisted && prepared && prepared.storage_path && prepared.storage_path !== raw.storage_path) {
-            call(client.storage.from('cleansmith-work').remove([prepared.storage_path]))
+          if (!persisted && uploadedPaths.length) {
+            removeStoragePaths(uploadedPaths)
               .then(function () { showError(error); })
               .catch(function (cleanupError) {
-                console.error('Unable to clean up the failed gallery upload:', cleanupError);
-                showError(new Error((error.message || 'The save failed.') + ' The uploaded file could not be removed.'));
+                console.error('Unable to clean up files from the failed save:', cleanupError);
+                showError(new Error((error.message || 'The save failed.') + ' Uploaded files could not be removed.'));
               });
             return;
           }
@@ -409,23 +478,61 @@
     return client.storage.from('cleansmith-work').getPublicUrl(path).data.publicUrl;
   }
 
-  function uploadTeamPhoto(form, values) {
-    var file = form.elements.image_file.files[0];
-    var upload = Promise.resolve();
-    if (file) {
-      if (file.size > 104857600) throw new Error('Files must be 100 MB or smaller.');
-      if (file.type.indexOf('image/') !== 0) throw new Error('Choose a supported image file for the team photo.');
-      var path = 'team/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '-' +
-        file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-      upload = call(client.storage.from('cleansmith-work').upload(path, file, { upsert: false })).then(function () {
-        values.storage_path = path;
-        values.image_url = publicUrl(path);
+  function getFormFile(form, name) {
+    var control = form && form.elements && form.elements.namedItem(name);
+    return control && control.files && control.files.length ? control.files[0] : null;
+  }
+
+  function getFormFiles(form, name) {
+    var control = form && form.elements && form.elements.namedItem(name);
+    return control && control.files ? Array.prototype.slice.call(control.files) : [];
+  }
+
+  function removeStoragePaths(paths) {
+    var uniquePaths = Array.from(new Set((paths || []).filter(Boolean)));
+    if (!uniquePaths.length) return Promise.resolve();
+    return call(client.storage.from('cleansmith-work').remove(uniquePaths));
+  }
+
+  function uploadFiles(files, folder) {
+    var uploaded = [];
+    return files.reduce(function (promise, file) {
+      return promise.then(function () {
+        if (file.size > 104857600) throw new Error('Files must be 100 MB or smaller.');
+        var name = String(file.name || 'upload').replace(/[^a-zA-Z0-9._-]/g, '-');
+        var path = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '-' + name;
+        return call(client.storage.from('cleansmith-work').upload(path, file, { upsert: false })).then(function () {
+          uploaded.push({ path: path, url: publicUrl(path) });
+        });
       });
+    }, Promise.resolve()).then(function () {
+      return uploaded;
+    }).catch(function (error) {
+      if (!uploaded.length) throw error;
+      return removeStoragePaths(uploaded.map(function (item) { return item.path; })).then(function () {
+        throw error;
+      }, function (cleanupError) {
+        throw new Error((error.message || 'The upload failed.') + ' Some uploaded files could not be removed: ' +
+          (cleanupError.message || 'storage cleanup failed.'));
+      });
+    });
+  }
+
+  function uploadTeamPhoto(values, form) {
+    var file = getFormFile(form, 'image_file');
+    if (file && file.type.indexOf('image/') !== 0) {
+      throw new Error('Choose a supported image file for the team photo.');
     }
     delete values.image_file;
     values.sort_order = number(values.sort_order);
     values.is_active = values.is_active === 'true';
-    return upload.then(function () {
+    if (!file && !values.image_url) throw new Error('Upload a team photo before saving this profile.');
+    return (file ? uploadFiles([file], 'team') : Promise.resolve([])).then(function (uploads) {
+      if (uploads.length) {
+        values.storage_path = uploads[0].path;
+        values.image_url = uploads[0].url;
+        values._uploaded_paths = [uploads[0].path];
+      }
       if (!values.image_url) throw new Error('Upload a team photo before saving this profile.');
       delete values.id;
       return values;
@@ -433,27 +540,128 @@
   }
 
   function uploadWork(form, values) {
-    var file = form.elements.media_file.files[0];
-    var upload;
-    if (file) {
-      if (file.size > 104857600) throw new Error('Files must be 100 MB or smaller.');
-      var type = file.type.indexOf('video/') === 0 ? 'video' : file.type.indexOf('image/') === 0 ? 'image' : '';
-      if (!type) throw new Error('Choose a supported image or video file.');
-      var path = Date.now() + '-' + Math.random().toString(36).slice(2) + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-      upload = call(client.storage.from('cleansmith-work').upload(path, file, { upsert: false })).then(function () {
-        values.storage_path = path;
-        values.media_url = publicUrl(path);
-        values.media_type = type;
-      });
-    } else {
-      if (!values.media_url) throw new Error('Select an image or video file to upload.');
-      upload = Promise.resolve();
-    }
+    var type = values.media_type || 'image';
+    var uploadedPaths = [];
     delete values.media_file;
-    return upload.then(function () {
+    delete values.before_file;
+    delete values.after_file;
+
+    if (type === 'before_after') {
+      var beforeFile = getFormFile(form, 'before_file');
+      var afterFile = getFormFile(form, 'after_file');
+      if (!beforeFile && !values.before_media_url) throw new Error('Upload a before image.');
+      if (!afterFile && !values.after_media_url) throw new Error('Upload an after image.');
+      [beforeFile, afterFile].filter(Boolean).forEach(function (file) {
+        if (file.type.indexOf('image/') !== 0) throw new Error('Before-and-after comparisons only support images.');
+      });
+      var tasks = [];
+      if (beforeFile) tasks.push(function () {
+        return uploadFiles([beforeFile], 'gallery/before').then(function (uploads) {
+          values.before_media_url = uploads[0].url;
+          values.before_storage_path = uploads[0].path;
+          uploadedPaths.push(uploads[0].path);
+        });
+      });
+      if (afterFile) tasks.push(function () {
+        return uploadFiles([afterFile], 'gallery/after').then(function (uploads) {
+          values.after_media_url = uploads[0].url;
+          values.after_storage_path = uploads[0].path;
+          uploadedPaths.push(uploads[0].path);
+        });
+      });
+      return tasks.reduce(function (promise, task) {
+        return promise.then(task);
+      }, Promise.resolve()).catch(function (error) {
+        return removeStoragePaths(uploadedPaths).then(function () {
+          throw error;
+        });
+      }).then(function () {
+        values.media_url = values.before_media_url;
+        values.media_type = 'before_after';
+        values.storage_path = null;
+        values._uploaded_paths = uploadedPaths;
+        delete values.id;
+        return values;
+      });
+    }
+
+    var file = getFormFile(form, 'media_file');
+    if (type !== 'image' && type !== 'video') throw new Error('Choose a valid gallery type.');
+    if (file) {
+      var actualType = file.type.indexOf('video/') === 0 ? 'video' : file.type.indexOf('image/') === 0 ? 'image' : '';
+      if (!actualType) throw new Error('Choose a supported image or video file.');
+      if (actualType !== type) throw new Error('The selected file does not match the gallery type.');
+    } else if (!values.media_url) {
+      throw new Error('Select an image or video file to upload.');
+    }
+    values.before_media_url = null;
+    values.after_media_url = null;
+    values.before_storage_path = null;
+    values.after_storage_path = null;
+    var upload = file ? uploadFiles([file], 'gallery') : Promise.resolve([]);
+    return upload.then(function (uploads) {
+      if (uploads.length) {
+        values.storage_path = uploads[0].path;
+        values.media_url = uploads[0].url;
+        values._uploaded_paths = [uploads[0].path];
+      }
+      values.media_type = type;
       delete values.id;
       return values;
     });
+  }
+
+  function updateGalleryMediaFields(form) {
+    var isBeforeAfter = form.elements.media_type.value === 'before_after';
+    form.querySelector('[data-gallery-single-file]').hidden = isBeforeAfter;
+    form.querySelector('[data-gallery-before-file]').hidden = !isBeforeAfter;
+    form.querySelector('[data-gallery-after-file]').hidden = !isBeforeAfter;
+  }
+
+  function prepareSitePage(values, form) {
+    var uploadedFiles = getFormFiles(form, 'hero_slide_files');
+    uploadedFiles.forEach(function (file) {
+      if (file.type.indexOf('image/') !== 0) throw new Error('Hero slides only support image files.');
+    });
+    var slides = parseHeroSlides(values.hero_slides_text, values.hero_slides_json);
+    values.sort_order = number(values.sort_order);
+    values.services = parseSiteServices(values.services_text);
+    delete values.services_text;
+    delete values.hero_slides_text;
+    delete values.hero_slides_json;
+    delete values.hero_slide_files;
+
+    return uploadFiles(uploadedFiles, 'hero').then(function (uploads) {
+      uploads.forEach(function (upload) {
+        slides.push({
+          title: values.hero_title || '',
+          subtitle: values.hero_subtitle || '',
+          image_url: upload.url,
+          cta_text: values.hero_cta_text || '',
+          cta_url: values.hero_cta_url || '',
+          storage_path: upload.path
+        });
+      });
+      values.hero_slides = slides;
+      values._uploaded_paths = uploads.map(function (upload) { return upload.path; });
+      return values;
+    });
+  }
+
+  function cleanupRemovedHeroSlides(record, previous, saved) {
+    var oldSlides = JSON.parse(previous.hero_slides_json || '[]');
+    var savedPaths = (saved.hero_slides || []).map(function (slide) { return slide.storage_path; }).filter(Boolean);
+    var removedPaths = oldSlides.map(function (slide) { return slide.storage_path; })
+      .filter(function (path) { return path && savedPaths.indexOf(path) === -1; });
+    return removeStoragePaths(removedPaths);
+  }
+
+  function cleanupReplacedGalleryFiles(record, previous, saved) {
+    var oldPaths = [previous.storage_path, previous.before_storage_path, previous.after_storage_path];
+    var savedPaths = [saved.storage_path, saved.before_storage_path, saved.after_storage_path];
+    return removeStoragePaths(oldPaths.filter(function (path) {
+      return path && savedPaths.indexOf(path) === -1;
+    }));
   }
 
   function setupDashboard() {
@@ -496,12 +704,7 @@
       window.setTimeout(function () { updateVehiclePriceFields(packageForm); }, 0);
     });
     updateVehiclePriceFields(packageForm);
-    connectForm('sitePageForm', 'site_pages', function (values) {
-      values.sort_order = number(values.sort_order);
-      values.services = parseSiteServices(values.services_text);
-      delete values.services_text;
-      return values;
-    });
+    connectForm('sitePageForm', 'site_pages', prepareSitePage, cleanupRemovedHeroSlides);
     document.getElementById('sitePageForm').elements.slug.addEventListener('change', function (event) {
       var page = sitePages.find(function (item) { return item.slug === event.currentTarget.value; });
       if (page) editSitePage(event.currentTarget.form, page);
@@ -527,19 +730,22 @@
     });
     connectForm('teamForm', 'team_members', uploadTeamPhoto, function (record, previous, saved) {
       if (previous.storage_path && previous.storage_path !== saved.storage_path) {
-        return call(client.storage.from('cleansmith-work').remove([previous.storage_path]));
+        return removeStoragePaths([previous.storage_path]);
       }
     });
     connectForm('galleryForm', 'work_gallery', function (values, form) {
       values.sort_order = number(values.sort_order);
       values.is_published = values.is_published === 'true';
       return uploadWork(form, values);
-    }, function (record, previous, saved) {
-      var oldPath = previous.storage_path;
-      if (oldPath && oldPath !== saved.storage_path) {
-        return call(client.storage.from('cleansmith-work').remove([oldPath]));
-      }
+    }, cleanupReplacedGalleryFiles);
+    var galleryForm = document.getElementById('galleryForm');
+    galleryForm.elements.media_type.addEventListener('change', function () {
+      updateGalleryMediaFields(galleryForm);
     });
+    galleryForm.addEventListener('reset', function () {
+      window.setTimeout(function () { updateGalleryMediaFields(galleryForm); }, 0);
+    });
+    updateGalleryMediaFields(galleryForm);
 
     document.getElementById('signOut').addEventListener('click', function () {
       client.auth.signOut().then(function (response) {

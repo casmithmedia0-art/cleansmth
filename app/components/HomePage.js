@@ -5,7 +5,11 @@ import { useState } from "react";
 import BookingWizard from "./BookingWizard";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
+import { getPageHeroSlides } from "../lib/site-content";
+import useHeroCarousel from "../lib/useHeroCarousel";
 import usePublicContent from "../lib/usePublicContent";
+
+const googleReviewsUrl = "https://cleansmith.revue.us/reviews";
 
 const testimonials = [
   { text: "Fantastic mobile car wash! They arrived on time and my car looks brand new.", name: "Google User", initials: "FM" },
@@ -77,6 +81,11 @@ function PackageCards({ packages, selectedPackage, onSelect }) {
 function safeImageUrl(value) {
   const url = String(value || "").trim();
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
+}
+
+function safeActionUrl(value, fallback) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) || /^(mailto|tel):/i.test(url) ? url : fallback;
 }
 
 function MembershipCards({ memberships }) {
@@ -151,7 +160,9 @@ export default function HomePage() {
   const [selectedPackage, setSelectedPackage] = useState("");
   const carWashGallery = gallery.filter((item) => (item.service_slug || "car-wash") === "car-wash");
   const carWashPackages = packages.filter((item) => (item.service_slug || "car-wash") === "car-wash");
-  const heroImage = safeImageUrl(page.hero_image_url);
+  const heroSlides = getPageHeroSlides(page);
+  const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
+  const heroImage = safeImageUrl(activeSlide.image_url);
   const services = Array.isArray(page.services) ? page.services : [];
 
   function choosePackage(slug) {
@@ -165,19 +176,26 @@ export default function HomePage() {
       <main>
         <section className="hero" id="home">
           <div className="hero-ring" /><div className="hero-ring" /><div className="hero-ring" />
-          <div className="hero-video-wrap" aria-hidden="true">
+          <div className="hero-video-wrap" aria-hidden="true" key={activeIndex}>
             {heroImage
-              ? <img className="hero-video" src={heroImage} alt="" />
+              ? <img className="hero-video hero-slide-image" src={heroImage} alt="" />
               : <video className="hero-video" autoPlay muted loop playsInline poster="/bike.jpeg"><source src="/clip1.mp4" type="video/mp4" /></video>}
           </div>
           <div className="hero-overlay" aria-hidden="true" />
           <div className="hero-content">
-            <div className="hero-eyebrow">Mobile Car Wash &amp; Detailing · Johannesburg</div>
-            <h1 className="hero-title">{page.hero_title}</h1>
-            <p className="hero-sub">{page.hero_subtitle}</p>
-            <div className="hero-ctas">
-              <Link href="/#booking" className="btn-primary">Book Now</Link>
-              <Link href="/#packages" className="btn-secondary">View Packages</Link>
+            <div key={activeIndex} className="hero-slide-copy" aria-live="polite" aria-atomic="true">
+              <div className="hero-eyebrow">Mobile Car Wash &amp; Detailing · Johannesburg</div>
+              <h1 className="hero-title">{activeSlide.title || page.hero_title}</h1>
+              <p className="hero-sub">{activeSlide.subtitle || page.hero_subtitle}</p>
+              <div className="hero-ctas">
+                <Link
+                  href={safeActionUrl(activeSlide.cta_url, "/#booking")}
+                  className="btn-primary"
+                >
+                  {activeSlide.cta_text || "Book Now"}
+                </Link>
+                <Link href="/#packages" className="btn-secondary">View Packages</Link>
+              </div>
             </div>
             <div className="trust-badges">
               <div className="trust-badge"><span className="stars">★★★★★</span> 4.9/5 Rated</div>
@@ -189,6 +207,23 @@ export default function HomePage() {
               <div className="trust-badge">Same-Day Booking</div>
             </div>
           </div>
+          {heroSlides.length > 1 ? (
+            <div className="hero-carousel-controls" aria-label="Hero slideshow controls">
+              <button type="button" aria-label="Previous hero slide" onClick={previous}>‹</button>
+              <div className="hero-carousel-dots">
+                {heroSlides.map((slide, index) => (
+                  <button
+                    key={`${slide.image_url}-${index}`}
+                    type="button"
+                    aria-label={`Show hero slide ${index + 1}`}
+                    aria-current={index === activeIndex ? "true" : undefined}
+                    onClick={() => goTo(index)}
+                  />
+                ))}
+              </div>
+              <button type="button" aria-label="Next hero slide" onClick={next}>›</button>
+            </div>
+          ) : null}
           <div className="scroll-ind"><span>Scroll</span><div className="scroll-dot" /></div>
         </section>
         <div className="glow-line" />
@@ -254,6 +289,9 @@ export default function HomePage() {
           <div className="section-inner">
             <div className="section-label fade-up">Reviews</div>
             <h2 className="section-title fade-up">What clients <span className="cyan">say</span></h2>
+            <a className="btn-secondary google-reviews-link" href={googleReviewsUrl} target="_blank" rel="noopener noreferrer">
+              Read our Google reviews
+            </a>
           </div>
           <Testimonials />
         </section>
@@ -288,6 +326,7 @@ export default function HomePage() {
             <ul className="footer-links">
               <li><Link href="/about">About us</Link></li>
               <li><Link href="/#reviews">Reviews</Link></li>
+              <li><a href={googleReviewsUrl} target="_blank" rel="noopener noreferrer">Read our Google reviews</a></li>
               <li><Link href="/#gallery">Gallery</Link></li>
               <li><Link href="/admin" rel="nofollow">Admin sign in</Link></li>
             </ul>

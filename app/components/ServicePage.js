@@ -4,6 +4,8 @@ import Link from "next/link";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
+import { getPageHeroSlides } from "../lib/site-content";
+import useHeroCarousel from "../lib/useHeroCarousel";
 import usePublicContent from "../lib/usePublicContent";
 
 function safeImageUrl(value) {
@@ -11,9 +13,16 @@ function safeImageUrl(value) {
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
 }
 
+function safeActionUrl(value, fallback) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) || /^(mailto|tel):/i.test(url) ? url : fallback;
+}
+
 export default function ServicePage({ slug }) {
   const { pages, gallery, packages } = usePublicContent();
   const page = pages[slug];
+  const heroSlides = getPageHeroSlides(page);
+  const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const services = Array.isArray(page.services) ? page.services : [];
   const pageGallery = gallery.filter((item) => (item.service_slug || "car-wash") === slug);
   const pagePackages = packages.filter((item) => item.service_slug === slug);
@@ -26,14 +35,42 @@ export default function ServicePage({ slug }) {
       <SiteHeader variant="service" activePage={slug} />
       <main>
         <section className="service-page-hero">
-          {safeImageUrl(page.hero_image_url) ? (
-            <img className="service-hero-image" src={safeImageUrl(page.hero_image_url)} alt="" aria-hidden="true" />
+          {safeImageUrl(activeSlide.image_url) ? (
+            <img key={activeIndex} className="service-hero-image hero-slide-image" src={safeImageUrl(activeSlide.image_url)} alt="" aria-hidden="true" />
           ) : null}
           <div className="service-page-hero-content">
-            <p className="service-page-eyebrow">CLEANSMITH · JOHANNESBURG</p>
-            <h1>{page.hero_title}</h1>
-            <p className="service-page-subtitle">{page.hero_subtitle}</p>
+            <div key={activeIndex} className="hero-slide-copy" aria-live="polite" aria-atomic="true">
+              <p className="service-page-eyebrow">CLEANSMITH · JOHANNESBURG</p>
+              <h1>{activeSlide.title || page.hero_title}</h1>
+              <p className="service-page-subtitle">{activeSlide.subtitle || page.hero_subtitle}</p>
+              <Link
+                className="service-hero-cta"
+                href={safeActionUrl(
+                  activeSlide.cta_url,
+                  `https://wa.me/27717856901?text=${encodeURIComponent(quoteText)}`,
+                )}
+              >
+                {activeSlide.cta_text || "Request a quote"}
+              </Link>
+            </div>
           </div>
+          {heroSlides.length > 1 ? (
+            <div className="hero-carousel-controls" aria-label="Hero slideshow controls">
+              <button type="button" aria-label="Previous hero slide" onClick={previous}>‹</button>
+              <div className="hero-carousel-dots">
+                {heroSlides.map((slide, index) => (
+                  <button
+                    key={`${slide.image_url}-${index}`}
+                    type="button"
+                    aria-label={`Show hero slide ${index + 1}`}
+                    aria-current={index === activeIndex ? "true" : undefined}
+                    onClick={() => goTo(index)}
+                  />
+                ))}
+              </div>
+              <button type="button" aria-label="Next hero slide" onClick={next}>›</button>
+            </div>
+          ) : null}
         </section>
         <section className="service-page-section">
           <div className="service-section-inner">

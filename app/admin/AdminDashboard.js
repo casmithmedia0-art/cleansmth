@@ -48,11 +48,12 @@ export default function AdminDashboard() {
           <p className="status" id="dashboardStatus" role="status" />
 
           <section className="section" data-section="pages" hidden>
-            <h2>Website pages</h2><p className="section-intro">Choose a page to edit its hero image and copy, service cards, and callout text.</p>
+            <h2>Website pages</h2><p className="section-intro">Choose a page to edit its hero copy, slides, call to action, service cards, and callout text.</p>
             <div className="layout">
               <div className="panel editor">
                 <form id="sitePageForm">
                   <input type="hidden" name="id" />
+                  <input type="hidden" name="hero_slides_json" />
                   <div className="fields">
                     <label>Page<select name="slug" required>
                       <option value="car-wash">Car Wash</option>
@@ -63,12 +64,17 @@ export default function AdminDashboard() {
                       <label>Section heading (About team heading)<input name="section_title" required /></label>
                     <label className="full">Hero title<input name="hero_title" required /></label>
                     <label className="full">Hero subtitle<textarea name="hero_subtitle" /></label>
-                      <label className="full">Introduction / story (separate About paragraphs with blank lines)<textarea name="intro" required /></label>
+                    <label>Hero CTA text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
+                    <label>Hero CTA link<input name="hero_cta_url" placeholder="/#booking or https://..." /></label>
+                    <label className="full">Introduction / story (separate About paragraphs with blank lines)<textarea name="intro" required /></label>
                     <label className="full">Hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /></label>
+                    <label className="full">Additional hero slides (one per line)<textarea name="hero_slides_text" rows={5} placeholder="Title | Subtitle | Image URL | CTA text | CTA URL" /></label>
+                    <p className="muted full">Upload one or more images to add hero slides. Each line above needs an image URL; uploaded slides use the current hero title, subtitle, and call to action.</p>
+                    <label className="full">Upload hero slide images<input name="hero_slide_files" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple /></label>
                     <label className="full">Service cards (one per line)<textarea name="services_text" rows={10} placeholder="Title | Description | Price or quote label | Image URL | Feature one; Feature two" /></label>
                     <p className="muted full">Use the format shown above. Separate features with semicolons. The image URL is optional; blank prices can be used for quote-only services.</p>
-                      <label className="full">Callout heading (About team eyebrow)<input name="callout_title" /></label>
-                      <label className="full">Callout text (About team introduction)<textarea name="callout_text" /></label>
+                    <label className="full">Callout heading (About team eyebrow)<input name="callout_title" /></label>
+                    <label className="full">Callout text (About team introduction)<textarea name="callout_text" /></label>
                     <label>Display order<input name="sort_order" type="number" defaultValue="0" required /></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>
@@ -167,10 +173,12 @@ export default function AdminDashboard() {
           </section>
 
           <section className="section" data-section="gallery" hidden>
-            <h2>Work gallery</h2><p className="section-intro">Upload images or videos to the gallery for the selected service.</p>
+            <h2>Work gallery</h2><p className="section-intro">Add images, videos, or an interactive before-and-after pair to any service gallery.</p>
             <div className="layout">
               <div className="panel editor"><form id="galleryForm">
-                <input type="hidden" name="id" /><input type="hidden" name="storage_path" /><input type="hidden" name="media_url" /><input type="hidden" name="media_type" />
+                <input type="hidden" name="id" /><input type="hidden" name="storage_path" /><input type="hidden" name="media_url" />
+                <input type="hidden" name="before_media_url" /><input type="hidden" name="after_media_url" />
+                <input type="hidden" name="before_storage_path" /><input type="hidden" name="after_storage_path" />
                 <div className="fields">
                   <label className="full">Service<select name="service_slug" required>
                     <option value="car-wash">Car wash</option>
@@ -178,7 +186,14 @@ export default function AdminDashboard() {
                     <option value="gardening">Gardening</option>
                   </select></label>
                   <label className="full">Title<input name="title" required /></label><label className="full">Caption<input name="caption" /></label>
-                  <label className="full">Image/video file<input name="media_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" /></label>
+                  <label>Gallery type<select name="media_type">
+                    <option value="image">Single image</option>
+                    <option value="video">Video</option>
+                    <option value="before_after">Before &amp; after</option>
+                  </select></label>
+                  <label className="full" data-gallery-single-file>Image/video file<input name="media_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" /></label>
+                  <label className="full" data-gallery-before-file hidden>Before image<input name="before_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
+                  <label className="full" data-gallery-after-file hidden>After image<input name="after_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
                   <label className="full">Alt text<input name="alt_text" /></label><label>Display order<input name="sort_order" type="number" defaultValue="0" /></label>
                   <label>Published<select name="is_published"><option value="true">Yes</option><option value="false">No</option></select></label>
                 </div><div className="item-actions"><button className="btn" type="submit">Save work</button><button className="btn secondary" type="reset">Clear</button></div>
