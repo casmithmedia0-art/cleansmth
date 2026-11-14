@@ -109,11 +109,25 @@
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  function updateVehiclePriceFields(form) {
+    var isCarWash = form.elements.service_slug.value === 'car-wash';
+    form.querySelector('[data-car-price-fields]').hidden = !isCarWash;
+    ['hatch', 'sedan', 'suv', 'luxury', 'minibus'].forEach(function (vehicle) {
+      form.elements['price_' + vehicle].required = isCarWash;
+    });
+  }
+
   function renderPackages(data) {
     var list = document.getElementById('packageList');
+    var serviceNames = {
+      'car-wash': 'Car wash',
+      'home-cleaning': 'Home cleaning',
+      gardening: 'Gardening'
+    };
     list.replaceChildren();
     data.forEach(function (pkg) {
       card(list, pkg.name + ' — R' + Number(pkg.starting_price).toLocaleString('en-ZA'),
+        (serviceNames[pkg.service_slug] || 'Car wash') + ' · ' +
         (pkg.is_active ? 'Visible' : 'Hidden') + ' · ' + pkg.slug,
         function () {
           var form = document.getElementById('packageForm');
@@ -122,6 +136,7 @@
             is_active: String,
             sort_order: String
           });
+          updateVehiclePriceFields(form);
           ['hatch', 'sedan', 'suv', 'luxury', 'minibus'].forEach(function (vehicle) {
             form.elements['price_' + vehicle].value = pkg.vehicle_prices && pkg.vehicle_prices[vehicle] != null
               ? pkg.vehicle_prices[vehicle]
@@ -179,7 +194,8 @@
     var names = {
       'car-wash': 'Car Wash',
       'home-cleaning': 'Home Cleaning',
-      gardening: 'Gardening'
+      gardening: 'Gardening',
+      about: 'About Us'
     };
     var selectedSlug = select.value || 'car-wash';
     select.replaceChildren();
@@ -259,6 +275,35 @@
     });
   }
 
+  function renderTeam(data) {
+    var list = document.getElementById('teamList');
+    list.replaceChildren();
+    data.forEach(function (member) {
+      var preview = member.image_url ? make('img') : null;
+      if (preview) {
+        preview.src = member.image_url;
+        preview.alt = member.name;
+      }
+      card(list, member.name, [member.role, member.is_active ? 'Visible' : 'Hidden'].filter(Boolean).join(' · '),
+        function () {
+          editForm(document.getElementById('teamForm'), member, {
+            is_active: String,
+            sort_order: String
+          });
+        },
+        function () {
+          if (!window.confirm('Delete this team profile?')) return;
+          remove('team_members', member.id).then(function () {
+            if (member.storage_path) {
+              return call(client.storage.from('cleansmith-work').remove([member.storage_path]));
+            }
+          }).then(refresh).then(function () {
+            message(dashboardStatus, 'Team profile deleted.');
+          }).catch(showError);
+        }, preview);
+    });
+  }
+
   function renderGallery(data) {
     var list = document.getElementById('galleryList');
     list.replaceChildren();
@@ -298,13 +343,15 @@
       rows('site_pages', 'sort_order'),
       rows('membership_plans', 'sort_order'),
       rows('members', 'full_name'),
-      rows('work_gallery', 'sort_order')
+      rows('work_gallery', 'sort_order'),
+      rows('team_members', 'sort_order')
     ]).then(function (data) {
       renderPackages(data[0]);
       renderSitePages(data[1]);
       renderPlans(data[2]);
       renderMembers(data[3]);
       renderGallery(data[4]);
+      renderTeam(data[5]);
     });
   }
 
@@ -362,6 +409,29 @@
     return client.storage.from('cleansmith-work').getPublicUrl(path).data.publicUrl;
   }
 
+  function uploadTeamPhoto(form, values) {
+    var file = form.elements.image_file.files[0];
+    var upload = Promise.resolve();
+    if (file) {
+      if (file.size > 104857600) throw new Error('Files must be 100 MB or smaller.');
+      if (file.type.indexOf('image/') !== 0) throw new Error('Choose a supported image file for the team photo.');
+      var path = 'team/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '-' +
+        file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+      upload = call(client.storage.from('cleansmith-work').upload(path, file, { upsert: false })).then(function () {
+        values.storage_path = path;
+        values.image_url = publicUrl(path);
+      });
+    }
+    delete values.image_file;
+    values.sort_order = number(values.sort_order);
+    values.is_active = values.is_active === 'true';
+    return upload.then(function () {
+      if (!values.image_url) throw new Error('Upload a team photo before saving this profile.');
+      delete values.id;
+      return values;
+    });
+  }
+
   function uploadWork(form, values) {
     var file = form.elements.media_file.files[0];
     var upload;
@@ -403,13 +473,13 @@
       values.starting_price = number(values.starting_price);
       values.sort_order = number(values.sort_order);
       values.features = lines(values.features);
-      values.vehicle_prices = {
-        hatch: number(values.price_hatch),
-        sedan: number(values.price_sedan),
-        suv: number(values.price_suv),
-        luxury: number(values.price_luxury),
-        minibus: number(values.price_minibus)
-      };
+      values.vehicle_prices = values.service_slug === 'car-wash' ? {
+          hatch: number(values.price_hatch),
+          sedan: number(values.price_sedan),
+          suv: number(values.price_suv),
+          luxury: number(values.price_luxury),
+          minibus: number(values.price_minibus)
+        } : {};
       delete values.price_hatch;
       delete values.price_sedan;
       delete values.price_suv;
@@ -418,6 +488,14 @@
       values.is_active = values.is_active === 'true';
       return values;
     });
+    var packageForm = document.getElementById('packageForm');
+    packageForm.elements.service_slug.addEventListener('change', function () {
+      updateVehiclePriceFields(packageForm);
+    });
+    packageForm.addEventListener('reset', function () {
+      window.setTimeout(function () { updateVehiclePriceFields(packageForm); }, 0);
+    });
+    updateVehiclePriceFields(packageForm);
     connectForm('sitePageForm', 'site_pages', function (values) {
       values.sort_order = number(values.sort_order);
       values.services = parseSiteServices(values.services_text);
@@ -446,6 +524,11 @@
       values.plan_id = nullableId(values.plan_id);
       values.joined_at = values.joined_at || undefined;
       return values;
+    });
+    connectForm('teamForm', 'team_members', uploadTeamPhoto, function (record, previous, saved) {
+      if (previous.storage_path && previous.storage_path !== saved.storage_path) {
+        return call(client.storage.from('cleansmith-work').remove([previous.storage_path]));
+      }
     });
     connectForm('galleryForm', 'work_gallery', function (values, form) {
       values.sort_order = number(values.sort_order);

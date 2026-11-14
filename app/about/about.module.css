@@ -161,6 +161,66 @@
   line-height: 1.8;
 }
 
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 18px;
+  max-width: 1100px;
+  margin: 24px auto 0;
+}
+
+.teamMember {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+}
+
+.teamPhoto,
+.teamInitials {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.teamPhoto {
+  object-fit: cover;
+  background: #10263b;
+}
+
+.teamInitials {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 30%, rgba(32, 207, 255, 0.28), #10263b 72%);
+  color: #20cfff;
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: 4rem;
+  letter-spacing: 0.08em;
+}
+
+.teamInfo {
+  padding: 18px;
+}
+
+.teamInfo h3 {
+  margin: 0;
+  font-family: "Rajdhani", Arial, sans-serif;
+  font-size: 1.4rem;
+}
+
+.teamRole {
+  margin: 4px 0 0;
+  color: #20cfff;
+  font-family: "Rajdhani", Arial, sans-serif;
+  font-weight: 700;
+}
+
+.teamInfo > p:not(.teamRole) {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.7;
+}
+
 .footer {
   display: flex;
   justify-content: space-between;

@@ -12,10 +12,11 @@ function safeImageUrl(value) {
 }
 
 export default function ServicePage({ slug }) {
-  const { pages, gallery } = usePublicContent();
+  const { pages, gallery, packages } = usePublicContent();
   const page = pages[slug];
   const services = Array.isArray(page.services) ? page.services : [];
   const pageGallery = gallery.filter((item) => (item.service_slug || "car-wash") === slug);
+  const pagePackages = packages.filter((item) => item.service_slug === slug);
   const quoteText = slug === "home-cleaning"
     ? "Hi CLEANSMITH, I would like a home cleaning quote."
     : "Hi CLEANSMITH, I would like a gardening quote.";
@@ -61,6 +62,37 @@ export default function ServicePage({ slug }) {
             </div>
           </div>
         </section>
+        {pagePackages.length ? (
+          <section className="service-page-section service-packages">
+            <div className="service-section-inner">
+              <p className="service-page-eyebrow">Service packages</p>
+              <h2>{slug === "gardening" ? "Garden care packages" : "Home-cleaning packages"}</h2>
+              <p className="service-page-intro">Choose the service that best fits your space. We will confirm the details and availability with you.</p>
+              <div className="service-package-grid">
+                {pagePackages.map((item) => (
+                  <article className="service-package-card" key={item.id || item.slug}>
+                    {item.badge ? <p className="service-package-badge">{item.badge}</p> : null}
+                    <h3>{item.name}</h3>
+                    <p className="service-package-price">
+                      {Number(item.starting_price) > 0
+                        ? `From R${Number(item.starting_price).toLocaleString("en-ZA")}`
+                        : "Request a quote"}
+                      {Number(item.starting_price) > 0 && item.price_unit ? <span> / {item.price_unit}</span> : null}
+                    </p>
+                    {item.duration ? <p className="service-package-duration">{item.duration}</p> : null}
+                    {item.description ? <p className="service-package-description">{item.description}</p> : null}
+                    {item.features?.length ? (
+                      <ul>{item.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+                    ) : null}
+                    <Link href={`https://wa.me/27717856901?text=${encodeURIComponent(`Hi CLEANSMITH, I would like a quote for the ${item.name} ${slug === "gardening" ? "gardening" : "home-cleaning"} package.`)}`}>
+                      Request this package
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
         <section className="service-page-section">
           <div className="service-section-inner">
             <p className="service-page-eyebrow">Recent work</p>

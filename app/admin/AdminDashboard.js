@@ -23,7 +23,7 @@ export default function AdminDashboard() {
         <section id="loginPanel" className="panel auth">
           <p className="muted">CLEANSMITH • ADMIN</p>
           <h1>Sign in to manage your site</h1>
-          <p className="muted">Manage service pages, packages, VIP memberships, member records, and work media.</p>
+          <p className="muted">Manage service pages and packages, the About team, VIP plans, member records, and work media.</p>
           <form id="loginForm">
             <label>Email<input name="email" type="email" autoComplete="username" required /></label>
             <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
@@ -40,6 +40,7 @@ export default function AdminDashboard() {
           <nav className="toolbar" aria-label="Dashboard sections">
             <button className="tab active" data-tab="packages" type="button">Packages</button>
             <button className="tab" data-tab="pages" type="button">Website pages</button>
+            <button className="tab" data-tab="team" type="button">About team</button>
             <button className="tab" data-tab="plans" type="button">Membership plans</button>
             <button className="tab" data-tab="members" type="button">Members</button>
             <button className="tab" data-tab="gallery" type="button">Work gallery</button>
@@ -47,7 +48,7 @@ export default function AdminDashboard() {
           <p className="status" id="dashboardStatus" role="status" />
 
           <section className="section" data-section="pages" hidden>
-            <h2>Website pages</h2><p className="section-intro">Edit the Car Wash, Home Cleaning, Gardening, and About Us pages, including the team introduction.</p>
+            <h2>Website pages</h2><p className="section-intro">Choose a page to edit its hero image and copy, service cards, and callout text.</p>
             <div className="layout">
               <div className="panel editor">
                 <form id="sitePageForm">
@@ -77,13 +78,37 @@ export default function AdminDashboard() {
             </div>
           </section>
 
+          <section className="section" data-section="team" hidden>
+            <h2>About Us team</h2><p className="section-intro">Add team profiles with a photo, name, job title, and short description. Hidden profiles stay in the dashboard but not on the public page.</p>
+            <div className="layout">
+              <div className="panel editor"><form id="teamForm">
+                <input type="hidden" name="id" /><input type="hidden" name="image_url" /><input type="hidden" name="storage_path" />
+                <div className="fields">
+                  <label>Full name<input name="name" required /></label>
+                  <label>Job title<input name="role" placeholder="Detailing specialist" /></label>
+                  <label className="full">Description<textarea name="description" rows={4} /></label>
+                  <label className="full">Team photo<input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
+                  <label>Display order<input name="sort_order" type="number" defaultValue="0" /></label>
+                  <label>Visible<select name="is_active"><option value="true">Yes</option><option value="false">No</option></select></label>
+                </div>
+                <div className="item-actions"><button className="btn" type="submit">Save team member</button><button className="btn secondary" type="reset">Clear</button></div>
+              </form></div>
+              <div className="items" id="teamList" />
+            </div>
+          </section>
+
           <section className="section" data-section="packages">
-            <h2>Packages</h2><p className="section-intro">Manage public service packages and per-vehicle booking prices.</p>
+            <h2>Service packages</h2><p className="section-intro">Manage packages by service page. Car-wash packages can also have prices by vehicle size.</p>
             <div className="layout">
               <div className="panel editor">
                 <form id="packageForm">
                   <input type="hidden" name="id" />
                   <div className="fields">
+                    <label className="full">Service page<select name="service_slug" required>
+                      <option value="car-wash">Car wash</option>
+                      <option value="home-cleaning">Home cleaning</option>
+                      <option value="gardening">Gardening</option>
+                    </select></label>
                     <label>Package name<input name="name" required /></label>
                     <label>URL slug<input name="slug" pattern="[a-z0-9-]+" required /></label>
                     <label>Starting price (R)<input name="starting_price" type="number" min="0" required /></label>
@@ -93,12 +118,12 @@ export default function AdminDashboard() {
                     <label>Card style<select name="style"><option value="standard">Standard</option><option value="featured">Featured</option><option value="executive">Executive</option></select></label>
                     <label className="full">Description<textarea name="description" /></label>
                     <label className="full">Features (one per line)<textarea name="features" /></label>
-                    <div className="full fields">
-                      <label>Hatchback price<input name="price_hatch" type="number" min="0" required /></label>
-                      <label>Sedan price<input name="price_sedan" type="number" min="0" required /></label>
-                      <label>SUV / Bakkie price<input name="price_suv" type="number" min="0" required /></label>
-                      <label>Luxury / Sports price<input name="price_luxury" type="number" min="0" required /></label>
-                      <label>Minibus / Van price<input name="price_minibus" type="number" min="0" required /></label>
+                    <div className="full fields vehicle-price-fields" data-car-price-fields>
+                      <label>Hatchback price<input name="price_hatch" type="number" min="0" /></label>
+                      <label>Sedan price<input name="price_sedan" type="number" min="0" /></label>
+                      <label>SUV / Bakkie price<input name="price_suv" type="number" min="0" /></label>
+                      <label>Luxury / Sports price<input name="price_luxury" type="number" min="0" /></label>
+                      <label>Minibus / Van price<input name="price_minibus" type="number" min="0" /></label>
                     </div>
                     <label>Display order<input name="sort_order" type="number" defaultValue="0" /></label>
                     <label>Visible<select name="is_active"><option value="true">Yes</option><option value="false">No</option></select></label>

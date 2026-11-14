@@ -5,7 +5,7 @@ import SiteHeader from "../components/SiteHeader";
 import usePublicContent from "../lib/usePublicContent";
 
 export default function AboutPageContent() {
-  const { pages } = usePublicContent();
+  const { pages, teamMembers } = usePublicContent();
   const page = pages.about;
   const storyParagraphs = String(page.intro || "").split(/\n\s*\n/).filter(Boolean);
 
@@ -35,6 +35,26 @@ export default function AboutPageContent() {
           <h2 id="team-title">{page.section_title}</h2>
           <p>{page.callout_text}</p>
         </div>
+        {teamMembers.length ? (
+          <div className={styles.teamGrid}>
+            {teamMembers.map((member) => (
+              <article className={styles.teamMember} key={member.id}>
+                {member.image_url ? (
+                  <img className={styles.teamPhoto} src={member.image_url} alt={member.name} loading="lazy" />
+                ) : (
+                  <div className={styles.teamInitials} aria-hidden="true">
+                    {member.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("")}
+                  </div>
+                )}
+                <div className={styles.teamInfo}>
+                  <h3>{member.name}</h3>
+                  {member.role ? <p className={styles.teamRole}>{member.role}</p> : null}
+                  {member.description ? <p>{member.description}</p> : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <footer className={styles.footer}>

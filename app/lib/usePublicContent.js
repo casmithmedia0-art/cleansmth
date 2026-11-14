@@ -13,6 +13,7 @@ export default function usePublicContent() {
   const [memberships, setMemberships] = useState(fallbackMemberships);
   const [pages, setPages] = useState(fallbackPages);
   const [gallery, setGallery] = useState(fallbackWorkGallery);
+  const [teamMembers, setTeamMembers] = useState([]);
 
   useEffect(() => {
     const config = window.CLEANSMITH_SUPABASE_CONFIG;
@@ -40,12 +41,36 @@ export default function usePublicContent() {
       setGallery([...rows, ...missingCategorySamples]);
     }
 
+    function mergePages(rows) {
+      setPages((current) => {
+        const next = { ...current };
+        rows.forEach((page) => {
+          const fallback = fallbackPages[page.slug];
+          if (!fallback) {
+            next[page.slug] = page;
+            return;
+          }
+
+          const merged = { ...fallback, ...page };
+          ["hero_title", "hero_subtitle", "intro", "hero_image_url", "section_title", "callout_title", "callout_text"]
+            .forEach((field) => {
+              if (!String(merged[field] || "").trim()) merged[field] = fallback[field];
+            });
+          if (!Array.isArray(merged.services) || !merged.services.length) {
+            merged.services = fallback.services;
+          }
+          next[page.slug] = merged;
+        });
+        return next;
+      });
+    }
+
     load(client.from("packages").select("*").order("sort_order"), "packages", setPackages);
     load(client.from("membership_plans").select("*").order("sort_order"), "membership plans", setMemberships);
     load(
       client.from("site_pages").select("*").order("sort_order"),
       "service page content",
-      (rows) => setPages((current) => ({ ...current, ...Object.fromEntries(rows.map((page) => [page.slug, page])) })),
+      mergePages,
     );
     load(
       client.from("work_gallery").select("*").eq("is_published", true).order("sort_order"),
@@ -53,7 +78,13 @@ export default function usePublicContent() {
       mergeGallery,
       true,
     );
+    load(
+      client.from("team_members").select("*").eq("is_active", true).order("sort_order"),
+      "team members",
+      setTeamMembers,
+      true,
+    );
   }, []);
 
-  return { packages, memberships, pages, gallery };
+  return { packages, memberships, pages, gallery, teamMembers };
 }

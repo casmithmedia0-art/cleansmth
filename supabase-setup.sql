@@ -13,6 +13,7 @@ grant execute on function public.is_cleansmith_admin() to authenticated;
 create table if not exists public.packages (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
+  service_slug text not null default 'car-wash',
   name text not null,
   description text not null default '',
   starting_price integer not null check (starting_price >= 0),
@@ -27,6 +28,14 @@ create table if not exists public.packages (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.packages
+  add column if not exists service_slug text not null default 'car-wash';
+alter table public.packages
+  drop constraint if exists packages_service_slug_check;
+alter table public.packages
+  add constraint packages_service_slug_check
+  check (service_slug in ('car-wash', 'home-cleaning', 'gardening'));
 
 create table if not exists public.membership_plans (
   id uuid primary key default gen_random_uuid(),
@@ -51,6 +60,19 @@ create table if not exists public.members (
   status text not null default 'active' check (status in ('active', 'paused', 'cancelled')),
   joined_at date not null default current_date,
   notes text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.team_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  role text not null default '',
+  description text not null default '',
+  image_url text not null default '',
+  storage_path text,
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -81,7 +103,7 @@ alter table public.work_gallery
 create table if not exists public.site_pages (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique check (slug in ('car-wash', 'home-cleaning', 'gardening', 'about')),
-  hero_title text not null,
+  hero_title text not null default '',
   hero_subtitle text not null default '',
   intro text not null default '',
   hero_image_url text not null default '',
@@ -95,7 +117,41 @@ create table if not exists public.site_pages (
 );
 
 alter table public.site_pages
+  add column if not exists hero_title text not null default '';
+alter table public.site_pages
+  add column if not exists hero_subtitle text not null default '';
+alter table public.site_pages
+  add column if not exists intro text not null default '';
+alter table public.site_pages
+  add column if not exists hero_image_url text not null default '';
+alter table public.site_pages
+  add column if not exists section_title text not null default 'Our services';
+alter table public.site_pages
+  add column if not exists services jsonb not null default '[]'::jsonb;
+alter table public.site_pages
+  add column if not exists callout_title text not null default '';
+alter table public.site_pages
+  add column if not exists callout_text text not null default '';
+alter table public.site_pages
   add column if not exists sort_order integer not null default 0;
+alter table public.site_pages
+  add column if not exists created_at timestamptz not null default now();
+alter table public.site_pages
+  add column if not exists updated_at timestamptz not null default now();
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'site_pages'
+      and column_name = 'title'
+      and is_nullable = 'NO'
+  ) then
+    execute 'alter table public.site_pages alter column title drop not null';
+  end if;
+end
+$$;
 alter table public.site_pages
   drop constraint if exists site_pages_slug_check;
 alter table public.site_pages
@@ -105,11 +161,14 @@ alter table public.site_pages
 alter table public.packages enable row level security;
 alter table public.membership_plans enable row level security;
 alter table public.members enable row level security;
+alter table public.team_members enable row level security;
 alter table public.work_gallery enable row level security;
 alter table public.site_pages enable row level security;
 
 grant select on public.packages, public.membership_plans, public.work_gallery to anon, authenticated;
 grant select, insert, update, delete on public.packages, public.membership_plans, public.members, public.work_gallery to authenticated;
+grant select on public.team_members to anon, authenticated;
+grant insert, update, delete on public.team_members to authenticated;
 grant select on public.site_pages to anon, authenticated;
 grant insert, update, delete on public.site_pages to authenticated;
 
@@ -132,6 +191,14 @@ create policy "Admins manage membership plans"
 drop policy if exists "Admins manage members" on public.members;
 create policy "Admins manage members"
   on public.members for all to authenticated
+  using (public.is_cleansmith_admin()) with check (public.is_cleansmith_admin());
+
+drop policy if exists "Public can read active team members" on public.team_members;
+create policy "Public can read active team members"
+  on public.team_members for select to anon, authenticated using (is_active or public.is_cleansmith_admin());
+drop policy if exists "Admins manage team members" on public.team_members;
+create policy "Admins manage team members"
+  on public.team_members for all to authenticated
   using (public.is_cleansmith_admin()) with check (public.is_cleansmith_admin());
 
 drop policy if exists "Public can read published work" on public.work_gallery;

@@ -150,6 +150,7 @@ export default function HomePage() {
   const page = pages["car-wash"];
   const [selectedPackage, setSelectedPackage] = useState("");
   const carWashGallery = gallery.filter((item) => (item.service_slug || "car-wash") === "car-wash");
+  const carWashPackages = packages.filter((item) => (item.service_slug || "car-wash") === "car-wash");
   const heroImage = safeImageUrl(page.hero_image_url);
   const services = Array.isArray(page.services) ? page.services : [];
 
@@ -227,7 +228,7 @@ export default function HomePage() {
             <div className="section-label fade-up">Pricing</div>
             <h2 className="section-title fade-up">Choose your <span className="cyan">package</span></h2>
             <p className="section-sub fade-up">Transparent pricing. No hidden fees. Premium results guaranteed.</p>
-            <PackageCards packages={packages} selectedPackage={selectedPackage} onSelect={choosePackage} />
+            <PackageCards packages={carWashPackages} selectedPackage={selectedPackage} onSelect={choosePackage} />
           </div>
         </section>
         <div className="glow-line" />
@@ -236,7 +237,7 @@ export default function HomePage() {
             <div className="section-label fade-up">Get started</div>
             <h2 className="section-title fade-up">Book your <span>detail</span></h2>
             <p className="section-sub fade-up">Choose your vehicle, package, preferred time, then confirm by WhatsApp or email.</p>
-            <BookingWizard packages={packages} selectedPackage={selectedPackage} onPackageChange={setSelectedPackage} />
+            <BookingWizard packages={carWashPackages} selectedPackage={selectedPackage} onPackageChange={setSelectedPackage} />
           </div>
         </section>
         <div className="glow-line" />
