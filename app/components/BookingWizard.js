@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import vehicleModelCatalog from "../lib/vehicle-models";
+
+const serviceOrigin = "2 Bank Road, Johannesburg, Gauteng, South Africa";
+let routesLibraryPromise;
 
 const vehicleTypes = [
   ["hatch", "Hatchback / small car"],
@@ -20,6 +23,49 @@ function money(value) {
   return Number(value || 0).toLocaleString("en-ZA");
 }
 
+function formatDistance(distanceKm) {
+  return `${distanceKm.toFixed(3)} km`;
+}
+
+function loadRoutesLibrary() {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    return Promise.reject(new Error("Distance calculation requires NEXT_PUBLIC_GOOGLE_MAPS_API_KEY."));
+  }
+
+  if (window.google?.maps?.importLibrary) {
+    return window.google.maps.importLibrary("routes");
+  }
+
+  if (!routesLibraryPromise) {
+    routesLibraryPromise = new Promise((resolve, reject) => {
+      const callbackName = "__cleansmithGoogleMapsReady";
+      const script = document.createElement("script");
+      window[callbackName] = () => {
+        delete window[callbackName];
+        resolve();
+      };
+      script.async = true;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&callback=${callbackName}`;
+      script.onerror = () => {
+        delete window[callbackName];
+        reject(new Error("Google Maps could not be loaded."));
+      };
+      document.head.appendChild(script);
+    }).then(() => {
+      if (!window.google?.maps?.importLibrary) {
+        throw new Error("Google Maps loaded without the Routes library.");
+      }
+      return window.google.maps.importLibrary("routes");
+    }).catch((error) => {
+      routesLibraryPromise = undefined;
+      throw error;
+    });
+  }
+
+  return routesLibraryPromise;
+}
+
 export default function BookingWizard({ packages, selectedPackage, onPackageChange }) {
   const [step, setStep] = useState(1);
   const [make, setMake] = useState("");
@@ -30,6 +76,11 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [address, setAddress] = useState("");
+  const [travelEstimate, setTravelEstimate] = useState(null);
+  const [distanceStatus, setDistanceStatus] = useState("idle");
+  const [distanceError, setDistanceError] = useState("");
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
+  const distanceRequestId = useRef(0);
   const [color, setColor] = useState("");
   const [registration, setRegistration] = useState("");
   const [vehicleNotes, setVehicleNotes] = useState("");
@@ -47,7 +98,7 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
     const addon = addonOptions.find(([value]) => value === key);
     return total + (addon ? addon[2] : 0);
   }, 0);
-  const total = basePrice + addonTotal;
+  const total = basePrice + addonTotal + (travelEstimate?.fee || 0);
   const priceLabel = useMemo(() => total > 0 ? `R ${money(total)}` : "R —", [total]);
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -68,6 +119,65 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
     if (selected) setVehicleSize(selected[1]);
   }
 
+  function changeAddress(value) {
+    distanceRequestId.current += 1;
+    setAddress(value);
+    setTravelEstimate(null);
+    setDistanceStatus("idle");
+    setDistanceError("");
+    setIsCalculatingDistance(false);
+  }
+
+  async function calculateTravelDistance() {
+    const destination = address.trim();
+    if (!destination) {
+      setDistanceError("Enter the full service address, including suburb and city.");
+      setDistanceStatus("error");
+      return;
+    }
+
+    const requestId = distanceRequestId.current + 1;
+    distanceRequestId.current = requestId;
+    setIsCalculatingDistance(true);
+    setDistanceStatus("loading");
+    setDistanceError("");
+
+    try {
+      const { Route } = await loadRoutesLibrary();
+      const { routes } = await Route.computeRoutes({
+        origin: serviceOrigin,
+        destination,
+        travelMode: "DRIVING",
+        fields: ["distanceMeters"],
+      });
+      if (requestId !== distanceRequestId.current) return;
+
+      const distanceMeters = routes?.[0]?.distanceMeters;
+      if (!Number.isFinite(distanceMeters) || distanceMeters < 0) {
+        throw new Error("Google Maps did not return a drivable route for this address.");
+      }
+
+      const chargeableKilometres = Math.max(0, Math.ceil((distanceMeters - 5000) / 1000));
+      setTravelEstimate({
+        distanceKm: distanceMeters / 1000,
+        chargeableKilometres,
+        fee: chargeableKilometres * 30,
+      });
+      setDistanceStatus("success");
+    } catch (error) {
+      if (requestId !== distanceRequestId.current) return;
+      console.error("Unable to calculate the CLEANSMITH driving distance:", error);
+      setTravelEstimate(null);
+      setDistanceStatus("error");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setDistanceError(errorMessage.includes("NEXT_PUBLIC_GOOGLE_MAPS_API_KEY")
+        ? "Distance calculation is not configured yet. Please contact CLEANSMITH to confirm your travel fee."
+        : "Unable to calculate a driving route. Check the full address and try again.");
+    } finally {
+      if (requestId === distanceRequestId.current) setIsCalculatingDistance(false);
+    }
+  }
+
   function continueWizard() {
     if (step === 1) {
       if (!make || !model || (model === "__other__" && !customModel.trim()) || !year || !vehicleSize || !selectedPackage) {
@@ -77,6 +187,10 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
     }
     if (step === 2 && (!date || !time || !address.trim())) {
       window.alert("Please choose a date, time, and address to continue.");
+      return;
+    }
+    if (step === 2 && !travelEstimate) {
+      window.alert("Calculate the driving distance before continuing.");
       return;
     }
     setStep((current) => Math.min(3, current + 1));
@@ -99,8 +213,16 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
       parts.push(`Add-ons: ${addons.map((key) => addonOptions.find(([value]) => value === key)?.[1] || key).join(", ")}`);
     }
     parts.push(`Preferred date & time: ${date} ${time}`, `Address: ${address}`);
+    if (travelEstimate) {
+      parts.push(
+        `Driving distance from CLEANSMITH: ${formatDistance(travelEstimate.distanceKm)}`,
+        travelEstimate.chargeableKilometres
+          ? `Travel charge: ${travelEstimate.chargeableKilometres} km × R30 = R ${money(travelEstimate.fee)}`
+          : "Travel charge: R 0 (within the first 5 km)",
+      );
+    }
     if (notes.trim()) parts.push(`Notes: ${notes.trim()}`);
-    if (total) parts.push(`Estimated total: R ${money(total)}`);
+    parts.push(`Estimated total: R ${money(total)}`);
     parts.push("---", "Thanks,", name);
     return parts.join("\n");
   }
@@ -184,6 +306,11 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
               <span>{vehicleName || "—"}{vehicleSize ? ` · ${vehicleTypes.find(([value]) => value === vehicleSize)?.[1]}` : ""}</span>
               <span>{packageRecord?.name || "—"}</span>
               <strong className="cyan">{priceLabel}</strong>
+              <span>
+                {travelEstimate
+                  ? `Travel: ${formatDistance(travelEstimate.distanceKm)} · ${travelEstimate.fee ? `R ${money(travelEstimate.fee)}` : "No travel charge"}`
+                  : "Travel fee: calculate from your address"}
+              </span>
             </div>
             <div className="vehicle-fields">
               <label className="form-label">Preferred date *
@@ -204,9 +331,33 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
               <label className="form-label field-wide">Vehicle condition or special instructions
                 <input className="form-control" value={vehicleNotes} onChange={(event) => setVehicleNotes(event.target.value)} placeholder="For example, pet hair, stains, or a specific area to focus on" />
               </label>
-              <label className="form-label field-wide">Address *
-                <input className="form-control" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Service address in Johannesburg" required />
+              <label className="form-label field-wide">Full service address (street, suburb, city) *
+                <input className="form-control" value={address} onChange={(event) => changeAddress(event.target.value)} placeholder="Street address, suburb, city" required />
               </label>
+            </div>
+            <div className="distance-calculation">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={calculateTravelDistance}
+                disabled={!address.trim() || isCalculatingDistance}
+              >
+                {isCalculatingDistance ? "Calculating route…" : travelEstimate ? "Recalculate distance" : "Calculate travel fee"}
+              </button>
+              <div role="status" aria-live="polite">
+                {distanceStatus === "success" ? (
+                  <p>
+                    Driving distance: {formatDistance(travelEstimate.distanceKm)}. First 5 km included; each started kilometre after that is R30.
+                    {" "}Travel fee: <strong>R {money(travelEstimate.fee)}</strong>
+                  </p>
+                ) : distanceStatus === "error" ? (
+                  <p className="distance-error">{distanceError}</p>
+                ) : distanceStatus === "loading" ? (
+                  <p>Finding the driving distance from CLEANSMITH…</p>
+                ) : (
+                  <p>Calculate the driving route to include any travel fee in your estimate.</p>
+                )}
+              </div>
             </div>
             <div className="addon-options">
               <p className="form-label">Add-on services</p>
@@ -228,6 +379,8 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
             <div className="wizard-summary">
               <div><strong>Vehicle:</strong> {vehicleName} · {vehicleTypes.find(([value]) => value === vehicleSize)?.[1]}</div>
               <div><strong>Package:</strong> {packageRecord?.name}</div>
+              <div><strong>Driving distance:</strong> {travelEstimate ? formatDistance(travelEstimate.distanceKm) : "—"}</div>
+              <div><strong>Travel fee:</strong> R {money(travelEstimate?.fee)}</div>
               <strong className="cyan">{priceLabel}</strong>
             </div>
             <div className="contact-fields">

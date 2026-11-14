@@ -5,6 +5,11 @@ import "./service-pages.css";
 export const metadata = {
   title: "CLEANSMITH — Premium Mobile Car Wash & Detailing | Johannesburg",
   description: "Professional mobile car wash and detailing service in Johannesburg.",
+  icons: {
+    icon: "/favicon-96x96.png",
+    shortcut: "/favicon-96x96.png",
+    apple: "/favicon-96x96.png",
+  },
 };
 
 export default function RootLayout({ children }) {
