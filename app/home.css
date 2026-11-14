@@ -66,14 +66,20 @@
   /* Premium shimmer */
   #home-page .pkg-card.featured::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.03),transparent);mix-blend-mode:overlay;pointer-events:none;animation:shimmer 4s linear infinite}
   @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-  /* TESTIMONIALS */
-  #home-page .testi-track-wrap{width:100%;overflow-x:auto;margin-top:40px;padding:10px 0}
-  #home-page .testi-track{display:flex;gap:20px;padding:10px 0;width:fit-content}
-  #home-page .testi-card{min-width:320px;width:320px;background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px}
-  #home-page .testi-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(90deg,var(--cyan),#67f2ff);display:flex;align-items:center;justify-content:center;color:var(--navy);font-weight:800}
-  #home-page .testi-subratings{display:flex;gap:8px;margin-top:8px}
   #home-page .pill{background:rgba(255,255,255,.04);padding:6px 8px;border-radius:999px;font-size:.8rem;color:var(--white-text)}
-  #home-page .google-reviews-link{display:inline-block;margin-top:20px;text-decoration:none}
+  #home-page .google-reviews-feed{margin-top:28px}
+  #home-page .google-reviews-summary{display:flex;align-items:center;gap:18px;margin-bottom:24px}
+  #home-page .google-reviews-summary>strong{font-family:var(--font-display);font-size:clamp(2.5rem,5vw,4rem);line-height:1;color:var(--white)}
+  #home-page .google-reviews-summary p{margin:4px 0 0;color:var(--white-text);font-size:.9rem}
+  #home-page .google-review-stars{color:#ffd700;letter-spacing:2px}
+  #home-page .google-review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+  #home-page .google-review-card{display:flex;flex-direction:column;gap:14px;min-width:0;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))}
+  #home-page .google-review-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  #home-page .google-review-header h3{margin:0;font-family:var(--font-heading);font-size:1.05rem}
+  #home-page .google-review-header time{display:block;margin-top:3px;color:var(--white-text);font-size:.78rem}
+  #home-page .google-review-card>p{margin:0;color:var(--white-text);line-height:1.7;white-space:pre-line}
+  #home-page .google-review-source{margin-top:auto;color:var(--cyan);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  #home-page .google-reviews-status{margin:24px 0;color:var(--white-text)}
   /* GALLERY */
   #home-page .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:24px;align-items:start}
   #home-page .gallery-item{overflow:hidden;border-radius:10px;background:rgba(255,255,255,0.02)}
@@ -107,7 +113,7 @@
   #home-page .addon-pill{background:rgba(255,255,255,.03);padding:8px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:8px}
   #home-page .pill{background:rgba(255,255,255,.04);padding:6px 8px;border-radius:999px;font-size:.8rem;color:var(--white-text)}
   /* Responsive */
-  @media(max-width:768px){#home-page .nav-links{display:none}#home-page .hamburger{display:flex}#home-page .hero{padding:80px 5vw 50px}#home-page .scroll-ind{display:none}#home-page .packages-grid{grid-template-columns:1fr}#home-page .gallery-grid{grid-template-columns:1fr}#home-page .testi-card{min-width:85vw;width:85vw}}
+  @media(max-width:768px){#home-page .nav-links{display:none}#home-page .hamburger{display:flex}#home-page .hero{padding:80px 5vw 50px}#home-page .scroll-ind{display:none}#home-page .packages-grid{grid-template-columns:1fr}#home-page .gallery-grid{grid-template-columns:1fr}}
   @media(max-width:375px){
     #home-page .hero{padding:60px 4vw 40px}
     #home-page .hero-title{font-size:2.4rem}
@@ -115,7 +121,6 @@
     #home-page .btn-primary, #home-page .btn-secondary{padding:10px 16px;font-size:.85rem}
     #home-page .wizard{padding:12px}
     #home-page .steps-inner .step{padding:8px}
-    #home-page .testi-card{min-width:88vw;width:88vw}
     #home-page .sticky-bottom-cta{padding:10px 12px}
     #home-page .nav-logo-img{height:38px}
   }
@@ -262,32 +267,6 @@
   margin-top: 10px;
   color: var(--white-text);
   font-size: 0.8rem;
-}
-
-#home-page .testimonial-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-#home-page .testi-stars {
-  color: #ffd700;
-}
-
-#home-page .testi-text {
-  margin-top: 6px;
-  font-style: italic;
-}
-
-#home-page .testimonial-source {
-  margin-top: 8px;
-  font-weight: 700;
-}
-
-#home-page .testimonial-source small {
-  display: block;
-  color: var(--white-text);
-  font-weight: 400;
 }
 
 #home-page .gallery-link {

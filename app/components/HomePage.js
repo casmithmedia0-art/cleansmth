@@ -3,19 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import BookingWizard from "./BookingWizard";
+import GoogleReviews from "./GoogleReviews";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
 import { getPageHeroSlides } from "../lib/site-content";
 import useHeroCarousel from "../lib/useHeroCarousel";
 import usePublicContent from "../lib/usePublicContent";
-
-const googleReviewsUrl = "https://cleansmith.revue.us/reviews";
-
-const testimonials = [
-  { text: "Fantastic mobile car wash! They arrived on time and my car looks brand new.", name: "Google User", initials: "FM" },
-  { text: "Great service, excellent attention to detail and good customer service. Keep up the good work.", name: "Google User", initials: "GS" },
-  { text: "Great service. My car came out spotless. Thank you guys.", name: "Google User", initials: "GV" },
-];
 
 const suburbs = [
   "Sandton", "Midrand", "Fourways", "Randburg", "Roodepoort", "Soweto",
@@ -108,31 +101,6 @@ function MembershipCards({ memberships }) {
   );
 }
 
-function Testimonials() {
-  return (
-    <div className="testi-track-wrap">
-      <div className="testi-track">
-        {testimonials.map((review, index) => (
-          <article className="testi-card" key={review.initials}>
-            <div className="testimonial-content">
-              <div className="testi-avatar">{review.initials}</div>
-              <div>
-                <div className="testi-stars">★★★★★</div>
-                <p className="testi-text">“{review.text}”</p>
-                <div className="testi-subratings">
-                  <span className="pill">Punctuality ★★★★★</span>
-                  <span className="pill">Cleanliness ★★★★★</span>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial-source">{review.name}<small>Johannesburg · Review {index + 1}</small></div>
-          </article>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function WhatsAppWidget() {
   const [open, setOpen] = useState(false);
   return (
@@ -198,7 +166,6 @@ export default function HomePage() {
               </div>
             </div>
             <div className="trust-badges">
-              <div className="trust-badge"><span className="stars">★★★★★</span> 4.9/5 Rated</div>
               <div className="trust-badge">1,000 Cars Detailed</div>
               <div className="trust-badge">👨‍🔧 Qualified Technicians</div>
               <div className="trust-badge">🚫 No Queue</div>
@@ -285,15 +252,12 @@ export default function HomePage() {
           </div>
         </section>
         <div className="glow-line" />
-        <section className="testimonials-section" id="reviews">
+        <section className="google-reviews-section" id="reviews">
           <div className="section-inner">
-            <div className="section-label fade-up">Reviews</div>
+            <div className="section-label fade-up">Google reviews</div>
             <h2 className="section-title fade-up">What clients <span className="cyan">say</span></h2>
-            <a className="btn-secondary google-reviews-link" href={googleReviewsUrl} target="_blank" rel="noopener noreferrer">
-              Read our Google reviews
-            </a>
+            <GoogleReviews />
           </div>
-          <Testimonials />
         </section>
         <div className="glow-line" />
         <section className="gallery-section" id="gallery">
@@ -326,7 +290,6 @@ export default function HomePage() {
             <ul className="footer-links">
               <li><Link href="/about">About us</Link></li>
               <li><Link href="/#reviews">Reviews</Link></li>
-              <li><a href={googleReviewsUrl} target="_blank" rel="noopener noreferrer">Read our Google reviews</a></li>
               <li><Link href="/#gallery">Gallery</Link></li>
               <li><Link href="/admin" rel="nofollow">Admin sign in</Link></li>
             </ul>
