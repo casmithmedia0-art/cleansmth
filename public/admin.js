@@ -152,86 +152,8 @@
     });
   }
 
-  function formatSiteServices(services) {
-    return (services || []).map(function (service) {
-      return [
-        service.title || '',
-        service.description || '',
-        service.price_label || '',
-        service.image_url || '',
-        (service.features || []).join('; ')
-      ].join(' | ');
-    }).join('\n');
-  }
-
-  function parseSiteServices(value) {
-    return lines(value).map(function (line, index) {
-      var fields = line.split('|').map(function (field) { return field.trim(); });
-      if (fields.length < 2 || !fields[0] || !fields[1]) {
-        throw new Error('Service card line ' + (index + 1) + ' needs a title and description separated by |.');
-      }
-      return {
-        title: fields[0],
-        description: fields[1],
-        price_label: fields[2] || '',
-        image_url: fields[3] || '',
-        features: fields[4] ? fields[4].split(';').map(function (feature) { return feature.trim(); }).filter(Boolean) : []
-      };
-    });
-  }
-
-  function formatHeroSlides(slides) {
-    return (slides || []).map(function (slide) {
-      return [
-        slide.title || '',
-        slide.subtitle || '',
-        slide.image_url || '',
-        slide.cta_text || '',
-        slide.cta_url || ''
-      ].join(' | ');
-    }).join('\n');
-  }
-
-  function parseHeroSlides(value, serializedSlides) {
-    var previousSlides;
-    try {
-      previousSlides = JSON.parse(serializedSlides || '[]');
-    } catch (error) {
-      throw new Error('The saved hero slides could not be read. Refresh the dashboard and try again.');
-    }
-    if (!Array.isArray(previousSlides)) {
-      throw new Error('The saved hero slides are invalid. Refresh the dashboard and try again.');
-    }
-
-    return lines(value).map(function (line, index) {
-      var fields = line.split('|').map(function (field) { return field.trim(); });
-      var imageUrl = fields[2] || '';
-      if (fields.length < 3 || !fields[0] || !fields[1] || !imageUrl) {
-        throw new Error('Hero slide line ' + (index + 1) + ' needs a title, subtitle, and image URL separated by |.');
-      }
-      if (!/^https?:\/\//i.test(imageUrl) && !/^\/(?!\/)/.test(imageUrl)) {
-        throw new Error('Hero slide line ' + (index + 1) + ' has an invalid image URL.');
-      }
-      var previous = previousSlides.find(function (slide) { return slide.image_url === imageUrl; });
-      return {
-        title: fields[0],
-        subtitle: fields[1],
-        image_url: imageUrl,
-        cta_text: fields[3] || '',
-        cta_url: fields[4] || '',
-        storage_path: previous ? previous.storage_path || null : null
-      };
-    });
-  }
-
   function editSitePage(form, page) {
-    editForm(form, Object.assign({}, page, {
-      services_text: formatSiteServices(page.services),
-      hero_slides_text: formatHeroSlides(page.hero_slides),
-      hero_slides_json: JSON.stringify(page.hero_slides || [])
-    }), {
-      sort_order: String
-    });
+    editForm(form, page);
   }
 
   function renderSitePages(data) {
@@ -257,7 +179,7 @@
       var item = make('article', undefined, 'item');
       var main = make('div', undefined, 'item-main');
       main.appendChild(make('div', names[page.slug] || page.slug, 'item-title'));
-      main.appendChild(make('small', page.hero_title + ' · ' + (page.services || []).length + ' service cards', 'muted'));
+      main.appendChild(make('small', page.hero_cta_text || 'No call-to-action text set', 'muted'));
       item.appendChild(main);
       var actions = make('div', undefined, 'item-actions');
       actions.appendChild(actionButton('Edit', function () {
@@ -618,42 +540,15 @@
     form.querySelector('[data-gallery-after-file]').hidden = !isBeforeAfter;
   }
 
-  function prepareSitePage(values, form) {
-    var uploadedFiles = getFormFiles(form, 'hero_slide_files');
-    uploadedFiles.forEach(function (file) {
-      if (file.type.indexOf('image/') !== 0) throw new Error('Hero slides only support image files.');
-    });
-    var slides = parseHeroSlides(values.hero_slides_text, values.hero_slides_json);
-    values.sort_order = number(values.sort_order);
-    values.services = parseSiteServices(values.services_text);
-    delete values.services_text;
-    delete values.hero_slides_text;
-    delete values.hero_slides_json;
-    delete values.hero_slide_files;
-
-    return uploadFiles(uploadedFiles, 'hero').then(function (uploads) {
-      uploads.forEach(function (upload) {
-        slides.push({
-          title: values.hero_title || '',
-          subtitle: values.hero_subtitle || '',
-          image_url: upload.url,
-          cta_text: values.hero_cta_text || '',
-          cta_url: values.hero_cta_url || '',
-          storage_path: upload.path
-        });
-      });
-      values.hero_slides = slides;
-      values._uploaded_paths = uploads.map(function (upload) { return upload.path; });
-      return values;
-    });
-  }
-
-  function cleanupRemovedHeroSlides(record, previous, saved) {
-    var oldSlides = JSON.parse(previous.hero_slides_json || '[]');
-    var savedPaths = (saved.hero_slides || []).map(function (slide) { return slide.storage_path; }).filter(Boolean);
-    var removedPaths = oldSlides.map(function (slide) { return slide.storage_path; })
-      .filter(function (path) { return path && savedPaths.indexOf(path) === -1; });
-    return removeStoragePaths(removedPaths);
+  function prepareSitePage(values) {
+    values.hero_image_url = String(values.hero_image_url || '').trim();
+    values.hero_cta_text = String(values.hero_cta_text || '').trim();
+    if (values.hero_image_url &&
+        !/^https?:\/\//i.test(values.hero_image_url) &&
+        !/^\/(?!\/)/.test(values.hero_image_url)) {
+      throw new Error('Enter a full image URL or a path starting with /.');
+    }
+    return values;
   }
 
   function cleanupReplacedGalleryFiles(record, previous, saved) {
@@ -704,7 +599,7 @@
       window.setTimeout(function () { updateVehiclePriceFields(packageForm); }, 0);
     });
     updateVehiclePriceFields(packageForm);
-    connectForm('sitePageForm', 'site_pages', prepareSitePage, cleanupRemovedHeroSlides);
+    connectForm('sitePageForm', 'site_pages', prepareSitePage);
     document.getElementById('sitePageForm').elements.slug.addEventListener('change', function (event) {
       var page = sitePages.find(function (item) { return item.slug === event.currentTarget.value; });
       if (page) editSitePage(event.currentTarget.form, page);

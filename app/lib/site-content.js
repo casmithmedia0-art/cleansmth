@@ -123,7 +123,7 @@ export function getPageHeroSlides(page) {
     title: slide.title || primarySlide.title,
     subtitle: slide.subtitle || primarySlide.subtitle,
     image_url: slide.image_url || "",
-    cta_text: slide.cta_text || primarySlide.cta_text,
+    cta_text: primarySlide.cta_text || slide.cta_text || "",
     cta_url: slide.cta_url || primarySlide.cta_url,
   }));
 }

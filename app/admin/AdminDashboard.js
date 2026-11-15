@@ -48,34 +48,20 @@ export default function AdminDashboard() {
           <p className="status" id="dashboardStatus" role="status" />
 
           <section className="section" data-section="pages" hidden>
-            <h2>Website pages</h2><p className="section-intro">Choose a page to edit its hero copy, slides, call to action, service cards, and callout text.</p>
+            <h2>Website pages</h2><p className="section-intro">Update the hero image and call-to-action text for each page. Other page content stays unchanged.</p>
             <div className="layout">
               <div className="panel editor">
                 <form id="sitePageForm">
                   <input type="hidden" name="id" />
-                  <input type="hidden" name="hero_slides_json" />
                   <div className="fields">
                     <label>Page<select name="slug" required>
                       <option value="car-wash">Car Wash</option>
                       <option value="home-cleaning">Home Cleaning</option>
                       <option value="gardening">Gardening</option>
-                        <option value="about">About Us</option>
+                      <option value="about">About Us</option>
                     </select></label>
-                      <label>Section heading (About team heading)<input name="section_title" required /></label>
-                    <label className="full">Hero title<input name="hero_title" required /></label>
-                    <label className="full">Hero subtitle<textarea name="hero_subtitle" /></label>
-                    <label>Hero CTA text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
-                    <label>Hero CTA link<input name="hero_cta_url" placeholder="/#booking or https://..." /></label>
-                    <label className="full">Introduction / story (separate About paragraphs with blank lines)<textarea name="intro" required /></label>
                     <label className="full">Hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /></label>
-                    <label className="full">Additional hero slides (one per line)<textarea name="hero_slides_text" rows={5} placeholder="Title | Subtitle | Image URL | CTA text | CTA URL" /></label>
-                    <p className="muted full">Upload one or more images to add hero slides. Each line above needs an image URL; uploaded slides use the current hero title, subtitle, and call to action.</p>
-                    <label className="full">Upload hero slide images<input name="hero_slide_files" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple /></label>
-                    <label className="full">Service cards (one per line)<textarea name="services_text" rows={10} placeholder="Title | Description | Price or quote label | Image URL | Feature one; Feature two" /></label>
-                    <p className="muted full">Use the format shown above. Separate features with semicolons. The image URL is optional; blank prices can be used for quote-only services.</p>
-                    <label className="full">Callout heading (About team eyebrow)<input name="callout_title" /></label>
-                    <label className="full">Callout text (About team introduction)<textarea name="callout_text" /></label>
-                    <label>Display order<input name="sort_order" type="number" defaultValue="0" required /></label>
+                    <label className="full">Call-to-action text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>
                 </form>
