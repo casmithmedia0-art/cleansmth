@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import BookingWizard from "./BookingWizard";
+import FAQSection from "./FAQSection";
 import GoogleReviews from "./GoogleReviews";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
@@ -242,6 +243,7 @@ export default function HomePage() {
             <BookingWizard packages={carWashPackages} selectedPackage={selectedPackage} onPackageChange={setSelectedPackage} />
           </div>
         </section>
+        <FAQSection service="car-wash" />
         <div className="glow-line" />
         <section className="vip-section" id="vip">
           <div className="section-inner">

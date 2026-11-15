@@ -4,6 +4,7 @@ import Link from "next/link";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
+import FAQSection from "./FAQSection";
 import { getPageHeroSlides } from "../lib/site-content";
 import useHeroCarousel from "../lib/useHeroCarousel";
 import usePublicContent from "../lib/usePublicContent";
@@ -140,6 +141,7 @@ export default function ServicePage({ slug }) {
             />
           </div>
         </section>
+        <FAQSection service={slug} />
         <section className="service-page-section service-page-cta">
           <div className="service-section-inner">
             <p className="service-page-eyebrow">Get started</p>
