@@ -55,9 +55,11 @@
   }
 
   function save(table, id, values) {
-    var query = id
-      ? client.from(table).update(values).eq('id', id)
-      : client.from(table).insert(values);
+    var query = table === 'site_pages'
+      ? client.from(table).update(values).eq('slug', values.slug)
+      : id
+        ? client.from(table).update(values).eq('id', id)
+        : client.from(table).insert(values);
     return call(query.select().single());
   }
 
