@@ -5,19 +5,17 @@ import { useEffect, useState } from "react";
 export default function useHeroCarousel(slides) {
   const [index, setIndex] = useState(0);
   const slideCount = slides.length;
+  const activeIndex = slideCount ? index % slideCount : 0;
 
   useEffect(() => {
-    setIndex(0);
     if (slideCount < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
-    const timer = window.setInterval(() => {
+    const timer = window.setTimeout(() => {
       setIndex((current) => (current + 1) % slideCount);
     }, 10000);
 
-    return () => window.clearInterval(timer);
-  }, [slideCount]);
-
-  const activeIndex = slideCount ? index % slideCount : 0;
+    return () => window.clearTimeout(timer);
+  }, [activeIndex, slideCount]);
 
   return {
     activeIndex,
