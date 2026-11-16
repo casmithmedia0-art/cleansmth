@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Script from "next/script";
 import { useCallback } from "react";
+import PoweredBy from "../components/PoweredBy";
 
 export default function AdminDashboard() {
   const initializeAdmin = useCallback(() => {
@@ -61,6 +62,7 @@ export default function AdminDashboard() {
                       <option value="about">About Us</option>
                     </select></label>
                     <label className="full">Hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /></label>
+                    <label className="full">Or upload a hero image<input name="hero_image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
                     <label className="full">Call-to-action text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>
@@ -189,6 +191,7 @@ export default function AdminDashboard() {
           </section>
         </section>
       </main>
+      <footer className="admin-attribution"><PoweredBy /></footer>
       <Script src="/admin.js" strategy="afterInteractive" onReady={initializeAdmin} onError={reportScriptError} />
     </>
   );

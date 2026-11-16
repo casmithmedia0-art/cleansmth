@@ -2,6 +2,7 @@
 
 import styles from "./about.module.css";
 import SiteHeader from "../components/SiteHeader";
+import PoweredBy from "../components/PoweredBy";
 import usePublicContent from "../lib/usePublicContent";
 
 function safeImageUrl(value) {
@@ -77,6 +78,7 @@ export default function AboutPageContent() {
       <footer className={styles.footer}>
         <a href="/">CLEANSMITH</a>
         <a href="/#booking">Book your car wash</a>
+        <PoweredBy />
       </footer>
     </main>
   );

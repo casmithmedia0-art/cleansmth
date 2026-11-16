@@ -153,6 +153,7 @@
   }
 
   function editSitePage(form, page) {
+    form.elements.hero_image_file.value = '';
     editForm(form, page);
   }
 
@@ -540,15 +541,25 @@
     form.querySelector('[data-gallery-after-file]').hidden = !isBeforeAfter;
   }
 
-  function prepareSitePage(values) {
+  function prepareSitePage(values, form) {
+    var file = getFormFile(form, 'hero_image_file');
+    delete values.hero_image_file;
     values.hero_image_url = String(values.hero_image_url || '').trim();
     values.hero_cta_text = String(values.hero_cta_text || '').trim();
-    if (values.hero_image_url &&
+    if (!file && values.hero_image_url &&
         !/^https?:\/\//i.test(values.hero_image_url) &&
         !/^\/(?!\/)/.test(values.hero_image_url)) {
       throw new Error('Enter a full image URL or a path starting with /.');
     }
-    return values;
+    if (!file) return values;
+    if (file.type.indexOf('image/') !== 0) {
+      throw new Error('Choose a supported image file for the hero image.');
+    }
+    return uploadFiles([file], 'hero').then(function (uploads) {
+      values.hero_image_url = uploads[0].url;
+      values._uploaded_paths = [uploads[0].path];
+      return values;
+    });
   }
 
   function cleanupReplacedGalleryFiles(record, previous, saved) {
@@ -600,7 +611,16 @@
     });
     updateVehiclePriceFields(packageForm);
     connectForm('sitePageForm', 'site_pages', prepareSitePage);
-    document.getElementById('sitePageForm').elements.slug.addEventListener('change', function (event) {
+    var sitePageForm = document.getElementById('sitePageForm');
+    var heroImageUrl = sitePageForm.elements.hero_image_url;
+    var heroImageFile = sitePageForm.elements.hero_image_file;
+    heroImageUrl.addEventListener('input', function () {
+      if (heroImageUrl.value) heroImageFile.value = '';
+    });
+    heroImageFile.addEventListener('change', function () {
+      if (getFormFile(sitePageForm, 'hero_image_file')) heroImageUrl.value = '';
+    });
+    sitePageForm.elements.slug.addEventListener('change', function (event) {
       var page = sitePages.find(function (item) { return item.slug === event.currentTarget.value; });
       if (page) editSitePage(event.currentTarget.form, page);
       else {

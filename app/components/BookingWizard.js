@@ -161,7 +161,7 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
       setTravelEstimate({
         distanceKm: distanceMeters / 1000,
         chargeableKilometres,
-        fee: chargeableKilometres * 30,
+        fee: chargeableKilometres * 15,
       });
       setDistanceStatus("success");
     } catch (error) {
@@ -217,7 +217,7 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
       parts.push(
         `Driving distance from CLEANSMITH: ${formatDistance(travelEstimate.distanceKm)}`,
         travelEstimate.chargeableKilometres
-          ? `Travel charge: ${travelEstimate.chargeableKilometres} km × R30 = R ${money(travelEstimate.fee)}`
+          ? `Travel charge: ${travelEstimate.chargeableKilometres} km × R15 = R ${money(travelEstimate.fee)}`
           : "Travel charge: R 0 (within the first 5 km)",
       );
     }
@@ -347,7 +347,7 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
               <div role="status" aria-live="polite">
                 {distanceStatus === "success" ? (
                   <p>
-                    Driving distance: {formatDistance(travelEstimate.distanceKm)}. First 5 km included; each started kilometre after that is R30.
+                    Driving distance: {formatDistance(travelEstimate.distanceKm)}. First 5 km included; each started kilometre after that is R15.
                     {" "}Travel fee: <strong>R {money(travelEstimate.fee)}</strong>
                   </p>
                 ) : distanceStatus === "error" ? (

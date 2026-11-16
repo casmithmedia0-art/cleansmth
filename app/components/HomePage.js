@@ -5,6 +5,7 @@ import { useState } from "react";
 import BookingWizard from "./BookingWizard";
 import FAQSection from "./FAQSection";
 import GoogleReviews from "./GoogleReviews";
+import PoweredBy from "./PoweredBy";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
 import { getPageHeroSlides } from "../lib/site-content";
@@ -312,7 +313,7 @@ export default function HomePage() {
         </div>
         <div className="footer-bottom">
           <p>© 2025 CLEANSMITH Mobile Car Wash &amp; Detailing. All rights reserved.</p>
-          <p className="powered-by">Powered by <a href="https://www.eva-tech-studio.com" target="_blank" rel="noopener noreferrer">eva-tech-studio</a></p>
+          <PoweredBy />
         </div>
       </footer>
       <WhatsAppWidget />

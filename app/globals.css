@@ -24,3 +24,18 @@ select,
 textarea {
   font: inherit;
 }
+
+.powered-by {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+}
+
+.powered-by a {
+  color: #20cfff;
+  text-decoration: none;
+}
+
+.powered-by a:hover {
+  text-decoration: underline;
+}
