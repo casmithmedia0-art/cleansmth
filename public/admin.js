@@ -147,8 +147,8 @@
         },
         function () {
           if (!window.confirm('Delete this package?')) return;
-          remove('packages', pkg.id).then(refresh).then(function () {
-            message(dashboardStatus, 'Package deleted.');
+          remove('packages', pkg.id).then(function () {
+            return refreshThenMessage('Package deleted.');
           }).catch(showError);
         });
     });
@@ -216,8 +216,8 @@
         },
         function () {
           if (!window.confirm('Delete this membership plan? Member records will be kept without a plan.')) return;
-          remove('membership_plans', plan.id).then(refresh).then(function () {
-            message(dashboardStatus, 'Membership plan deleted.');
+          remove('membership_plans', plan.id).then(function () {
+            return refreshThenMessage('Membership plan deleted.');
           }).catch(showError);
         });
     });
@@ -241,8 +241,8 @@
         },
         function () {
           if (!window.confirm('Delete this member record?')) return;
-          remove('members', member.id).then(refresh).then(function () {
-            message(dashboardStatus, 'Member record deleted.');
+          remove('members', member.id).then(function () {
+            return refreshThenMessage('Member record deleted.');
           }).catch(showError);
         });
     });
@@ -270,8 +270,8 @@
             if (member.storage_path) {
               return call(client.storage.from('cleansmith-work').remove([member.storage_path]));
             }
-          }).then(refresh).then(function () {
-            message(dashboardStatus, 'Team profile deleted.');
+          }).then(function () {
+            return refreshThenMessage('Team profile deleted.');
           }).catch(showError);
         }, preview);
     });
@@ -280,6 +280,10 @@
   function renderGallery(data) {
     var list = document.getElementById('galleryList');
     list.replaceChildren();
+    if (!data.length) {
+      list.appendChild(make('p', 'No work media yet. Uploaded images and videos will appear here.', 'muted'));
+      return;
+    }
     var serviceNames = {
       'car-wash': 'Car wash',
       'home-cleaning': 'Home cleaning',
@@ -321,28 +325,49 @@
               work.before_storage_path,
               work.after_storage_path
             ]);
-          }).then(refresh).then(function () {
-            message(dashboardStatus, 'Gallery item deleted.');
+          }).then(function () {
+            return refreshThenMessage('Gallery item deleted.');
           }).catch(showError);
         }, preview);
     });
   }
 
   function refresh() {
-    return Promise.all([
-      rows('packages', 'sort_order'),
-      rows('site_pages', 'sort_order'),
-      rows('membership_plans', 'sort_order'),
-      rows('members', 'full_name'),
-      rows('work_gallery', 'sort_order'),
-      rows('team_members', 'sort_order')
-    ]).then(function (data) {
-      renderPackages(data[0]);
-      renderSitePages(data[1]);
-      renderPlans(data[2]);
-      renderMembers(data[3]);
-      renderGallery(data[4]);
-      renderTeam(data[5]);
+    var sections = [
+      { label: 'packages', table: 'packages', column: 'sort_order', render: renderPackages },
+      { label: 'website pages', table: 'site_pages', column: 'sort_order', render: renderSitePages },
+      { label: 'membership plans', table: 'membership_plans', column: 'sort_order', render: renderPlans },
+      { label: 'members', table: 'members', column: 'full_name', render: renderMembers },
+      { label: 'work gallery', table: 'work_gallery', column: 'sort_order', render: renderGallery },
+      { label: 'team profiles', table: 'team_members', column: 'sort_order', render: renderTeam }
+    ];
+    return Promise.all(sections.map(function (section) {
+      return rows(section.table, section.column).then(function (data) {
+        return { data: data };
+      }).catch(function (error) {
+        console.error('Unable to load CLEANSMITH ' + section.label + ':', error);
+        return { error: true };
+      });
+    })).then(function (results) {
+      var failedSections = [];
+      results.forEach(function (result, index) {
+        if (result.error) {
+          failedSections.push(sections[index].label);
+          return;
+        }
+        sections[index].render(result.data);
+      });
+      if (failedSections.length) {
+        message(dashboardStatus, 'Unable to load: ' + failedSections.join(', ') + '. Check the database setup and permissions.', true);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  function refreshThenMessage(successMessage) {
+    return refresh().then(function (refreshed) {
+      if (refreshed) message(dashboardStatus, successMessage);
     });
   }
 
@@ -379,8 +404,8 @@
           resetForm(form);
           if (selectedPageSlug) form.elements.slug.value = selectedPageSlug;
           return refresh();
-        }).then(function () {
-          message(dashboardStatus, 'Saved successfully.');
+        }).then(function (refreshed) {
+          if (refreshed) message(dashboardStatus, 'Saved successfully.');
         }).catch(function (error) {
           if (!persisted && uploadedPaths.length) {
             removeStoragePaths(uploadedPaths)

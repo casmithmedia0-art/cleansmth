@@ -10,12 +10,12 @@ export default function useHeroCarousel(slides) {
   useEffect(() => {
     if (slideCount < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
-    const timer = window.setTimeout(() => {
+    const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % slideCount);
     }, 10000);
 
-    return () => window.clearTimeout(timer);
-  }, [activeIndex, slideCount]);
+    return () => window.clearInterval(timer);
+  }, [slideCount]);
 
   return {
     activeIndex,
