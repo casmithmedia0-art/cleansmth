@@ -12,7 +12,7 @@ export default function useHeroCarousel(slides) {
 
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % slideCount);
-    }, 6500);
+    }, 10000);
 
     return () => window.clearInterval(timer);
   }, [slideCount]);

@@ -22,7 +22,10 @@ function safeActionUrl(value, fallback) {
 export default function ServicePage({ slug }) {
   const { pages, gallery, packages } = usePublicContent();
   const page = pages[slug];
-  const heroSlides = getPageHeroSlides(page);
+  const heroSlides = getPageHeroSlides(
+    page,
+    (page.services || []).map((service) => service.image_url),
+  );
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const services = Array.isArray(page.services) ? page.services : [];
   const pageGallery = gallery.filter((item) => (item.service_slug || "car-wash") === slug);
