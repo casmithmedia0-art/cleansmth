@@ -54,6 +54,7 @@ export default function AdminDashboard() {
               <div className="panel editor">
                 <form id="sitePageForm">
                   <input type="hidden" name="id" />
+                  <input type="hidden" name="current_hero_image_url" />
                   <div className="fields">
                     <label>Page<select name="slug" required>
                       <option value="car-wash">Car Wash</option>
@@ -61,9 +62,11 @@ export default function AdminDashboard() {
                       <option value="gardening">Gardening</option>
                       <option value="about">About Us</option>
                     </select></label>
-                    <label className="full">Hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /></label>
+                    <label className="full">Primary hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /><span className="muted">Clear the URL and save to remove this image.</span></label>
                     <label className="full">Or upload a hero image<input name="hero_image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
+                    <label className="full">Additional hero slides<textarea name="hero_slides" rows={5} placeholder="Title | Subtitle | Image URL | CTA text | CTA URL" /><span className="muted">One slide per line. Remove a line and save to delete that slide.</span></label>
                     <label className="full">Call-to-action text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
+                    <label className="full">Services<textarea name="services" rows={8} placeholder="Title | Description | Price or quote label | Image URL | Feature one; Feature two" /><span className="muted">One service per line. Edit or remove lines to update the service cards and their images.</span></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>
                 </form>

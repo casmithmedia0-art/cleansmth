@@ -119,6 +119,11 @@
     });
   }
 
+  function isSafeImageUrl(value) {
+    var url = String(value || '');
+    return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url);
+  }
+
   function renderPackages(data) {
     var list = document.getElementById('packageList');
     var serviceNames = {
@@ -156,7 +161,25 @@
 
   function editSitePage(form, page) {
     form.elements.hero_image_file.value = '';
-    editForm(form, page);
+    form.elements.current_hero_image_url.value = page.hero_image_url || '';
+    editForm(form, page, {
+      hero_slides: function (slides) {
+        return (slides || []).map(function (slide) {
+          return [slide.title, slide.subtitle, slide.image_url, slide.cta_text, slide.cta_url].join(' | ');
+        }).join('\n');
+      },
+      services: function (services) {
+        return (services || []).map(function (service) {
+          return [
+            service.title,
+            service.description,
+            service.price_label,
+            service.image_url,
+            (service.features || []).join('; ')
+          ].join(' | ');
+        }).join('\n');
+      }
+    });
   }
 
   function renderSitePages(data) {
@@ -180,9 +203,30 @@
     list.replaceChildren();
     data.forEach(function (page) {
       var item = make('article', undefined, 'item');
+      var previews = [page.hero_image_url].concat((page.hero_slides || []).map(function (slide) {
+        return slide && slide.image_url;
+      })).filter(function (url) {
+        return isSafeImageUrl(url);
+      });
+      if (previews.length < 2) {
+        (page.services || []).forEach(function (service) {
+          if (isSafeImageUrl(service.image_url) && previews.indexOf(service.image_url) === -1) previews.push(service.image_url);
+        });
+      }
+      if (previews.length) {
+        var imageList = make('div', undefined, 'page-hero-images');
+        previews.forEach(function (url, index) {
+          var image = make('img');
+          image.src = url;
+          image.alt = names[page.slug] + ' hero image ' + (index + 1);
+          imageList.appendChild(image);
+        });
+        item.appendChild(imageList);
+      }
       var main = make('div', undefined, 'item-main');
       main.appendChild(make('div', names[page.slug] || page.slug, 'item-title'));
-      main.appendChild(make('small', page.hero_cta_text || 'No call-to-action text set', 'muted'));
+      main.appendChild(make('small', previews.length + ' hero image(s) · ' +
+        (page.hero_cta_text || 'No call-to-action text set'), 'muted'));
       item.appendChild(main);
       var actions = make('div', undefined, 'item-actions');
       actions.appendChild(actionButton('Edit', function () {
@@ -571,11 +615,41 @@
   function prepareSitePage(values, form) {
     var file = getFormFile(form, 'hero_image_file');
     delete values.hero_image_file;
+    delete values.current_hero_image_url;
     values.hero_image_url = String(values.hero_image_url || '').trim();
     values.hero_cta_text = String(values.hero_cta_text || '').trim();
-    if (!file && values.hero_image_url &&
-        !/^https?:\/\//i.test(values.hero_image_url) &&
-        !/^\/(?!\/)/.test(values.hero_image_url)) {
+    values.hero_slides = lines(values.hero_slides).map(function (line) {
+      var fields = line.split('|').map(function (field) { return field.trim(); });
+      var imageUrl = fields[2] || '';
+      if (!isSafeImageUrl(imageUrl)) {
+        throw new Error('Each hero slide needs a full image URL or a path starting with /.');
+      }
+      return {
+        title: fields[0] || '',
+        subtitle: fields[1] || '',
+        image_url: imageUrl,
+        cta_text: fields[3] || '',
+        cta_url: fields[4] || ''
+      };
+    });
+    values.services = lines(values.services).map(function (line) {
+      var fields = line.split('|').map(function (field) { return field.trim(); });
+      var imageUrl = fields[3] || '';
+      if (!fields[0]) throw new Error('Each service needs a title.');
+      if (imageUrl && !isSafeImageUrl(imageUrl)) {
+        throw new Error('Service images need a full URL or a path starting with /.');
+      }
+      return {
+        title: fields[0],
+        description: fields[1] || '',
+        price_label: fields[2] || '',
+        image_url: imageUrl,
+        features: (fields[4] || '').split(';').map(function (feature) {
+          return feature.trim();
+        }).filter(Boolean)
+      };
+    });
+    if (!file && values.hero_image_url && !isSafeImageUrl(values.hero_image_url)) {
       throw new Error('Enter a full image URL or a path starting with /.');
     }
     if (!file) return values;
@@ -587,6 +661,37 @@
       values._uploaded_paths = [uploads[0].path];
       return values;
     });
+  }
+
+  function heroStoragePath(url) {
+    try {
+      var imageUrl = new URL(url);
+      var projectUrl = new URL(config.url);
+      var prefix = '/storage/v1/object/public/cleansmith-work/hero/';
+      if (imageUrl.origin !== projectUrl.origin || imageUrl.pathname.indexOf(prefix) !== 0) return '';
+      var filePath = decodeURIComponent(imageUrl.pathname.slice(prefix.length));
+      return filePath ? 'hero/' + filePath : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function cleanupReplacedHeroImage(record, previous, saved) {
+    var oldUrls = [previous.current_hero_image_url];
+    oldUrls = oldUrls.concat(lines(previous.hero_slides).map(function (line) {
+      return line.split('|')[2] || '';
+    }));
+    oldUrls = oldUrls.concat(lines(previous.services).map(function (line) {
+      return line.split('|')[3] || '';
+    }));
+    var currentUrls = [saved.hero_image_url].concat((saved.hero_slides || []).map(function (slide) {
+      return slide.image_url;
+    })).concat((saved.services || []).map(function (service) { return service.image_url; }));
+    var currentPaths = currentUrls.map(heroStoragePath);
+    var pathsToRemove = oldUrls.map(heroStoragePath).filter(function (path) {
+      return path && currentPaths.indexOf(path) === -1;
+    });
+    return removeStoragePaths(pathsToRemove);
   }
 
   function cleanupReplacedGalleryFiles(record, previous, saved) {
@@ -637,7 +742,7 @@
       window.setTimeout(function () { updateVehiclePriceFields(packageForm); }, 0);
     });
     updateVehiclePriceFields(packageForm);
-    connectForm('sitePageForm', 'site_pages', prepareSitePage);
+    connectForm('sitePageForm', 'site_pages', prepareSitePage, cleanupReplacedHeroImage);
     var sitePageForm = document.getElementById('sitePageForm');
     var heroImageUrl = sitePageForm.elements.hero_image_url;
     var heroImageFile = sitePageForm.elements.hero_image_file;
