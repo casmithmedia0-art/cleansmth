@@ -24,7 +24,7 @@ export default function AdminDashboard() {
         <section id="loginPanel" className="panel auth">
           <p className="muted">CLEANSMITH • ADMIN</p>
           <h1>Sign in to manage your site</h1>
-          <p className="muted">Manage service pages and packages, the About team, VIP plans, member records, and work media.</p>
+          <p className="muted">Manage service pages, booking add-ons, packages, the About team, VIP plans, and work media.</p>
           <form id="loginForm">
             <label>Email<input name="email" type="email" autoComplete="username" required /></label>
             <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
             <button className="tab" data-tab="pages" type="button">Website pages</button>
             <button className="tab" data-tab="team" type="button">About team</button>
             <button className="tab" data-tab="plans" type="button">Membership plans</button>
-            <button className="tab" data-tab="members" type="button">Members</button>
+            <button className="tab" data-tab="services" type="button">Services</button>
             <button className="tab" data-tab="gallery" type="button">Work gallery</button>
           </nav>
           <p className="status" id="dashboardStatus" role="status" />
@@ -66,7 +66,6 @@ export default function AdminDashboard() {
                     <label className="full">Or upload a hero image<input name="hero_image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
                     <label className="full">Additional hero slides<textarea name="hero_slides" rows={5} placeholder="Title | Subtitle | Image URL | CTA text | CTA URL" /><span className="muted">One slide per line. Remove a line and save to delete that slide.</span></label>
                     <label className="full">Call-to-action text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
-                    <label className="full">Services<textarea name="services" rows={8} placeholder="Title | Description | Price or quote label | Image URL | Feature one; Feature two" /><span className="muted">One service per line. Edit or remove lines to update the service cards and their images.</span></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>
                 </form>
@@ -148,18 +147,43 @@ export default function AdminDashboard() {
             </div>
           </section>
 
-          <section className="section" data-section="members" hidden>
-            <h2>Member records</h2><p className="section-intro">Private customer records for your VIP program. These are not customer login accounts.</p>
-            <div className="layout">
-              <div className="panel editor"><form id="memberForm">
-                <input type="hidden" name="id" /><div className="fields">
-                  <label>Full name<input name="full_name" required /></label><label>Email<input name="email" type="email" /></label>
-                  <label>Phone<input name="phone" type="tel" /></label><label>Plan<select name="plan_id" id="memberPlan"><option value="">No plan</option></select></label>
-                  <label>Status<select name="status"><option value="active">Active</option><option value="paused">Paused</option><option value="cancelled">Cancelled</option></select></label>
-                  <label>Joined<input name="joined_at" type="date" /></label><label className="full">Notes<textarea name="notes" /></label>
-                </div><div className="item-actions"><button className="btn" type="submit">Save member</button><button className="btn secondary" type="reset">Clear</button></div>
+          <section className="section" data-section="services" hidden>
+            <h2>Services</h2><p className="section-intro">Manage the service cards published on each page and the optional add-ons customers can select when booking.</p>
+            <h3 className="subsection-title">Website service cards</h3>
+            <p className="section-intro">Edit each card separately so its title, description, image, price label, and features display in their own fields on the published page.</p>
+            <div className="layout service-editor-layout">
+              <div className="panel editor"><form id="pageServiceForm">
+                <input type="hidden" name="service_index" /><input type="hidden" name="storage_path" />
+                <div className="fields">
+                  <label className="full">Website page<select name="page_slug" required>
+                    <option value="car-wash">Car wash</option>
+                    <option value="home-cleaning">Home cleaning</option>
+                    <option value="gardening">Gardening</option>
+                  </select></label>
+                  <label className="full">Service title<input name="title" required /></label>
+                  <label className="full">Description<textarea name="description" rows={4} /></label>
+                  <label>Price or quote label<input name="price_label" placeholder="Request a quote" /></label>
+                  <label>Service image URL<input name="image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /><span className="muted">Clear the URL and save to remove the image.</span></label>
+                  <label className="full">Or upload a service image<input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
+                  <label className="full">Features (one per line)<textarea name="features" rows={4} /></label>
+                </div>
+                <div className="item-actions"><button className="btn" type="submit">Save service card</button><button className="btn secondary" type="reset">Clear</button></div>
               </form></div>
-              <div className="items" id="memberList" />
+              <div className="items" id="pageServiceList" />
+            </div>
+            <h3 className="subsection-title">Booking add-ons</h3>
+            <p className="section-intro">Active add-ons appear in the car-wash booking form and are included in the estimate.</p>
+            <div className="layout">
+              <div className="panel editor"><form id="bookingAddonForm">
+                <input type="hidden" name="id" /><div className="fields">
+                  <label>Service name<input name="name" required /></label>
+                  <label>Service slug<input name="slug" pattern="[a-z0-9_-]+" required /><span className="muted">Use lowercase letters, numbers, hyphens, or underscores.</span></label>
+                  <label>Price (R)<input name="price" type="number" min="0" required /></label>
+                  <label>Display order<input name="sort_order" type="number" defaultValue="0" /></label>
+                  <label>Visible<select name="is_active"><option value="true">Yes</option><option value="false">No</option></select></label>
+                </div><div className="item-actions"><button className="btn" type="submit">Save booking add-on</button><button className="btn secondary" type="reset">Clear</button></div>
+              </form></div>
+              <div className="items" id="bookingAddonList" />
             </div>
           </section>
 

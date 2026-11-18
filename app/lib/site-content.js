@@ -90,6 +90,12 @@ export const fallbackMemberships = [
   { name: "Gold", price: 1199, billing_interval: "month", benefits: ["2x Premium Details", "Priority Booking", "15% off add-ons", "Free Odor Treatment"], discount_percent: 15, badge: "GOLD" },
 ];
 
+export const fallbackBookingAddons = [
+  { slug: "deep_interior", name: "Deep Interior", price: 200 },
+  { slug: "carpet_clean", name: "Carpet", price: 250 },
+  { slug: "mattress_clean", name: "Mattress", price: 300 },
+];
+
 export const fallbackCarWashGallery = [
   { title: "Bike detailing", alt_text: "Motorbike detail", media_url: "/bike.jpeg", media_type: "image", service_slug: "car-wash" },
   { title: "Bike detail angle", alt_text: "Motorbike detail from another angle", media_url: "/bike2.jpeg", media_type: "image", service_slug: "car-wash" },

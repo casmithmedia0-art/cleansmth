@@ -125,7 +125,7 @@ function WhatsAppWidget() {
 }
 
 export default function HomePage() {
-  const { pages, packages, memberships, gallery } = usePublicContent();
+  const { pages, packages, memberships, bookingAddons, gallery } = usePublicContent();
   const page = pages["car-wash"];
   const [selectedPackage, setSelectedPackage] = useState("");
   const carWashGallery = gallery.filter((item) => (item.service_slug || "car-wash") === "car-wash");
@@ -244,7 +244,7 @@ export default function HomePage() {
             <div className="section-label fade-up">Get started</div>
             <h2 className="section-title fade-up">Book your <span>detail</span></h2>
             <p className="section-sub fade-up">Choose your vehicle, package, preferred time, then confirm by WhatsApp or email.</p>
-            <BookingWizard packages={carWashPackages} selectedPackage={selectedPackage} onPackageChange={setSelectedPackage} />
+            <BookingWizard packages={carWashPackages} bookingAddons={bookingAddons} selectedPackage={selectedPackage} onPackageChange={setSelectedPackage} />
           </div>
         </section>
         <FAQSection service="car-wash" />

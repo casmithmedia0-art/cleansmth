@@ -64,6 +64,17 @@ create table if not exists public.members (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.booking_addons (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique check (slug ~ '^[a-z0-9]+([_-][a-z0-9]+)*$'),
+  name text not null,
+  price integer not null check (price >= 0),
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.team_members (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -192,12 +203,13 @@ alter table public.site_pages
 alter table public.packages enable row level security;
 alter table public.membership_plans enable row level security;
 alter table public.members enable row level security;
+alter table public.booking_addons enable row level security;
 alter table public.team_members enable row level security;
 alter table public.work_gallery enable row level security;
 alter table public.site_pages enable row level security;
 
-grant select on public.packages, public.membership_plans, public.work_gallery to anon, authenticated;
-grant select, insert, update, delete on public.packages, public.membership_plans, public.members, public.work_gallery to authenticated;
+grant select on public.packages, public.membership_plans, public.booking_addons, public.work_gallery to anon, authenticated;
+grant select, insert, update, delete on public.packages, public.membership_plans, public.members, public.booking_addons, public.work_gallery to authenticated;
 grant select on public.team_members to anon, authenticated;
 grant insert, update, delete on public.team_members to authenticated;
 grant select on public.site_pages to anon, authenticated;
@@ -217,6 +229,14 @@ create policy "Public can read active membership plans"
 drop policy if exists "Admins manage membership plans" on public.membership_plans;
 create policy "Admins manage membership plans"
   on public.membership_plans for all to authenticated
+  using (public.is_cleansmith_admin()) with check (public.is_cleansmith_admin());
+
+drop policy if exists "Public can read active booking add-ons" on public.booking_addons;
+create policy "Public can read active booking add-ons"
+  on public.booking_addons for select to anon, authenticated using (is_active or public.is_cleansmith_admin());
+drop policy if exists "Admins manage booking add-ons" on public.booking_addons;
+create policy "Admins manage booking add-ons"
+  on public.booking_addons for all to authenticated
   using (public.is_cleansmith_admin()) with check (public.is_cleansmith_admin());
 
 drop policy if exists "Admins manage members" on public.members;
@@ -284,6 +304,13 @@ values
   ('executive', 'Executive Ceramic', 'Our ultimate protection and detailing service.', 1200, 'session',
    '{"hatch":1100,"sedan":1200,"suv":1400,"luxury":1600,"minibus":1300}'::jsonb, '3 – 4 hours',
    array['Premium ceramic coating', 'Full interior detailing', 'Leather treatment', 'Engine bay wipe', 'Premium wax finish', 'Seat deep clean', 'Odor treatment', 'Full exterior polish', 'Detailed rim cleaning'], 'Top Tier', 'executive', 3)
+on conflict (slug) do nothing;
+
+insert into public.booking_addons (slug, name, price, sort_order)
+values
+  ('deep_interior', 'Deep Interior', 200, 1),
+  ('carpet_clean', 'Carpet', 250, 2),
+  ('mattress_clean', 'Mattress', 300, 3)
 on conflict (slug) do nothing;
 
 insert into public.site_pages

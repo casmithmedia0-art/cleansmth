@@ -8,7 +8,6 @@
   var loginStatus = document.getElementById('loginStatus');
   var dashboardStatus = document.getElementById('dashboardStatus');
   var client;
-  var plans = [];
   var sitePages = [];
 
   function message(node, text, error) {
@@ -36,10 +35,6 @@
 
   function formValues(form) {
     return Object.fromEntries(new FormData(form).entries());
-  }
-
-  function nullableId(value) {
-    return value || null;
   }
 
   function lines(value) {
@@ -167,17 +162,6 @@
         return (slides || []).map(function (slide) {
           return [slide.title, slide.subtitle, slide.image_url, slide.cta_text, slide.cta_url].join(' | ');
         }).join('\n');
-      },
-      services: function (services) {
-        return (services || []).map(function (service) {
-          return [
-            service.title,
-            service.description,
-            service.price_label,
-            service.image_url,
-            (service.features || []).join('; ')
-          ].join(' | ');
-        }).join('\n');
       }
     });
   }
@@ -203,23 +187,31 @@
     list.replaceChildren();
     data.forEach(function (page) {
       var item = make('article', undefined, 'item');
-      var previews = [page.hero_image_url].concat((page.hero_slides || []).map(function (slide) {
-        return slide && slide.image_url;
-      })).filter(function (url) {
-        return isSafeImageUrl(url);
-      });
-      if (previews.length < 2) {
-        (page.services || []).forEach(function (service) {
-          if (isSafeImageUrl(service.image_url) && previews.indexOf(service.image_url) === -1) previews.push(service.image_url);
-        });
+      var previews = [];
+      if (isSafeImageUrl(page.hero_image_url)) {
+        previews.push({ url: page.hero_image_url, kind: 'primary' });
       }
+      (page.hero_slides || []).forEach(function (slide, index) {
+        if (slide && isSafeImageUrl(slide.image_url)) {
+          previews.push({ url: slide.image_url, kind: 'slide', index: index });
+        }
+      });
       if (previews.length) {
         var imageList = make('div', undefined, 'page-hero-images');
-        previews.forEach(function (url, index) {
+        previews.forEach(function (preview, index) {
+          var imageWrapper = make('div', undefined, 'page-hero-image');
           var image = make('img');
-          image.src = url;
+          image.src = preview.url;
           image.alt = names[page.slug] + ' hero image ' + (index + 1);
-          imageList.appendChild(image);
+          imageWrapper.appendChild(image);
+          var removeButton = make('button', '×', 'page-hero-image-remove');
+          removeButton.type = 'button';
+          removeButton.setAttribute('aria-label', 'Delete ' + names[page.slug] + ' hero image ' + (index + 1));
+          removeButton.addEventListener('click', function () {
+            deleteHeroImage(page, preview);
+          });
+          imageWrapper.appendChild(removeButton);
+          imageList.appendChild(imageWrapper);
         });
         item.appendChild(imageList);
       }
@@ -239,16 +231,230 @@
 
     var selectedPage = data.find(function (page) { return page.slug === select.value; });
     if (selectedPage) editSitePage(form, selectedPage);
+    renderPageServices();
+  }
+
+  function renderPageServices() {
+    var form = document.getElementById('pageServiceForm');
+    var list = document.getElementById('pageServiceList');
+    var pageSlug = form.elements.page_slug.value;
+    var page = sitePages.find(function (item) { return item.slug === pageSlug; });
+    list.replaceChildren();
+    if (!page) {
+      list.appendChild(make('p', 'This page is not available in the website pages table.', 'muted'));
+      return;
+    }
+
+    (page.services || []).forEach(function (service, index) {
+      var preview = isSafeImageUrl(service.image_url) ? make('img') : null;
+      if (preview) {
+        preview.src = service.image_url;
+        preview.alt = service.title || 'Service image';
+      }
+      card(list, service.title || 'Untitled service',
+        [service.price_label, (service.features || []).length + ' features'].filter(Boolean).join(' · '),
+        function () {
+          form.reset();
+          form.elements.page_slug.value = pageSlug;
+          form.elements.service_index.value = String(index);
+          form.elements.title.value = service.title || '';
+          form.elements.description.value = service.description || '';
+          form.elements.price_label.value = service.price_label || '';
+          form.elements.image_url.value = service.image_url || '';
+          form.elements.storage_path.value = service.storage_path || '';
+          form.elements.features.value = (service.features || []).join('\n');
+          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        },
+        function () {
+          if (!window.confirm('Delete this service card from the published page?')) return;
+          var nextServices = (page.services || []).slice();
+          nextServices.splice(index, 1);
+          call(client.from('site_pages').update({ services: nextServices })
+            .eq('slug', page.slug).select().single()).then(function () {
+            return removeUnreferencedServiceImage(service, page.slug, nextServices);
+          }).catch(function (error) {
+            return refresh().then(function () { throw error; });
+          }).then(function () {
+            return refreshThenMessage('Service card deleted.');
+          }).catch(showError);
+        }, preview);
+    });
+    if (!(page.services || []).length) {
+      list.appendChild(make('p', 'No service cards yet. Add one using the form.', 'muted'));
+    }
+  }
+
+  function removeUnreferencedServiceImage(service, pageSlug, nextServices) {
+    var imageUrl = service && service.image_url;
+    var storagePath = service && (service.storage_path || serviceStoragePath(imageUrl) || heroStoragePath(imageUrl));
+    if (!imageUrl || !storagePath) return Promise.resolve();
+    var referencedUrls = sitePages.reduce(function (urls, page) {
+      var services = page.slug === pageSlug ? nextServices : (page.services || []);
+      return urls.concat(
+        [page.hero_image_url],
+        (page.hero_slides || []).map(function (slide) { return slide && slide.image_url; }),
+        services.map(function (item) { return item && item.image_url; })
+      );
+    }, []);
+    return referencedUrls.indexOf(imageUrl) === -1
+      ? removeStoragePaths([storagePath])
+      : Promise.resolve();
+  }
+
+  function savePageService(event) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var pageSlug = form.elements.page_slug.value;
+    var page = sitePages.find(function (item) { return item.slug === pageSlug; });
+    if (!page) {
+      showError(new Error('Choose a website page before saving a service.'));
+      return;
+    }
+
+    var file = getFormFile(form, 'image_file');
+    if (file && file.type.indexOf('image/') !== 0) {
+      showError(new Error('Choose a supported image file for the service.'));
+      return;
+    }
+    var title = String(form.elements.title.value || '').trim();
+    var imageUrl = String(form.elements.image_url.value || '').trim();
+    if (!title) {
+      showError(new Error('Enter a service title.'));
+      return;
+    }
+    if (!file && imageUrl && !isSafeImageUrl(imageUrl)) {
+      showError(new Error('Enter a full image URL or a path starting with /.'));
+      return;
+    }
+
+    var rawIndex = form.elements.service_index.value;
+    var index = rawIndex === '' ? -1 : Number(rawIndex);
+    if (rawIndex !== '' && (!Number.isInteger(index) || index < 0)) {
+      showError(new Error('Choose a valid service card to edit.'));
+      return;
+    }
+    var oldService = index >= 0 ? (page.services || [])[index] : null;
+    if (index >= 0 && !oldService) {
+      showError(new Error('This service card has changed. Refresh the dashboard and try again.'));
+      return;
+    }
+    message(dashboardStatus, 'Saving service card…');
+    var uploadedPaths = [];
+    var nextServices;
+    var nextService;
+    var persisted = false;
+    var upload = file ? uploadFiles([file], 'services/' + pageSlug) : Promise.resolve([]);
+    upload.then(function (uploads) {
+      uploadedPaths = uploads.map(function (item) { return item.path; });
+      nextService = Object.assign({}, oldService || {}, {
+        title: title,
+        description: String(form.elements.description.value || '').trim(),
+        price_label: String(form.elements.price_label.value || '').trim(),
+        image_url: uploads.length ? uploads[0].url : imageUrl,
+        storage_path: uploads.length
+          ? uploads[0].path
+          : (imageUrl === (oldService && oldService.image_url)
+            ? (oldService.storage_path || serviceStoragePath(imageUrl) || null)
+            : (serviceStoragePath(imageUrl) || null)),
+        features: lines(form.elements.features.value)
+      });
+      nextServices = (page.services || []).slice();
+      if (index < 0) nextServices.push(nextService);
+      else nextServices[index] = nextService;
+      return call(client.from('site_pages').update({ services: nextServices })
+        .eq('slug', pageSlug).select().single()).then(function (record) {
+        persisted = true;
+        return record;
+      });
+    }).then(function () {
+      return oldService
+        ? removeUnreferencedServiceImage(oldService, pageSlug, nextServices)
+        : Promise.resolve();
+    }).then(function () {
+      form.reset();
+      form.elements.page_slug.value = pageSlug;
+      return refresh();
+    }).then(function (refreshed) {
+      if (refreshed) message(dashboardStatus, 'Service card saved.');
+    }).catch(function (error) {
+      if (!persisted && uploadedPaths.length) {
+        removeStoragePaths(uploadedPaths).then(function () {
+          showError(error);
+        }).catch(function (cleanupError) {
+          console.error('Unable to clean up service images from the failed save:', cleanupError);
+          showError(new Error((error.message || 'The save failed.') + ' Uploaded images could not be removed.'));
+        });
+        return;
+      }
+      if (persisted) {
+        refresh().then(function () { showError(error); }).catch(function (refreshError) {
+          console.error('Unable to refresh after saving a service card:', refreshError);
+          showError(error);
+        });
+        return;
+      }
+      showError(error);
+    });
+  }
+
+  function serviceStoragePath(url) {
+    try {
+      var imageUrl = new URL(url);
+      var projectUrl = new URL(config.url);
+      var prefix = '/storage/v1/object/public/cleansmith-work/services/';
+      if (imageUrl.origin !== projectUrl.origin || imageUrl.pathname.indexOf(prefix) !== 0) return '';
+      var filePath = decodeURIComponent(imageUrl.pathname.slice(prefix.length));
+      return filePath ? 'services/' + filePath : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function deleteHeroImage(page, preview) {
+    if (!window.confirm('Delete this hero image? The uploaded file will also be removed if no other page uses it.')) return;
+    var nextHeroUrl = page.hero_image_url || '';
+    var nextSlides = (page.hero_slides || []).slice();
+    if (preview.kind === 'primary') {
+      nextHeroUrl = '';
+    } else {
+      nextSlides.splice(preview.index, 1);
+    }
+
+    call(client.from('site_pages').update({
+      hero_image_url: nextHeroUrl,
+      hero_slides: nextSlides
+    }).eq('slug', page.slug).select().single()).then(function () {
+      var referencedUrls = sitePages.filter(function (item) {
+        return item.slug !== page.slug;
+      }).reduce(function (urls, item) {
+        return urls.concat(
+          [item.hero_image_url],
+          (item.hero_slides || []).map(function (slide) { return slide && slide.image_url; }),
+          (item.services || []).map(function (service) { return service && service.image_url; })
+        );
+      }, []).concat(
+        [nextHeroUrl],
+        nextSlides.map(function (slide) { return slide && slide.image_url; }),
+        (page.services || []).map(function (service) { return service && service.image_url; })
+      );
+      var storagePath = heroStoragePath(preview.url);
+      var cleanup = storagePath && referencedUrls.indexOf(preview.url) === -1
+        ? removeStoragePaths([storagePath])
+        : Promise.resolve();
+      return cleanup.then(function () {
+        return refresh();
+      }, function (error) {
+        return refresh().then(function () { throw error; });
+      });
+    }).then(function (refreshed) {
+      if (refreshed) message(dashboardStatus, 'Hero image deleted.');
+    }).catch(showError);
   }
 
   function renderPlans(data) {
-    plans = data;
     var list = document.getElementById('planList');
-    var select = document.getElementById('memberPlan');
     list.replaceChildren();
-    select.replaceChildren(new Option('No plan', ''));
     data.forEach(function (plan) {
-      select.add(new Option(plan.name, plan.id));
       card(list, plan.name + ' — R' + Number(plan.price).toLocaleString('en-ZA') + ' / ' + plan.billing_interval,
         (plan.is_active ? 'Visible' : 'Hidden') + ' · ' + (plan.benefits || []).length + ' benefits',
         function () {
@@ -265,28 +471,24 @@
           }).catch(showError);
         });
     });
-    var memberSelect = document.getElementById('memberForm').elements.plan_id;
-    var selected = memberSelect.value;
-    memberSelect.replaceChildren(new Option('No plan', ''));
-    data.forEach(function (plan) { memberSelect.add(new Option(plan.name, plan.id)); });
-    memberSelect.value = selected;
   }
 
-  function renderMembers(data) {
-    var list = document.getElementById('memberList');
+  function renderBookingAddons(data) {
+    var list = document.getElementById('bookingAddonList');
     list.replaceChildren();
-    data.forEach(function (member) {
-      var plan = plans.find(function (item) { return item.id === member.plan_id; });
-      card(list, member.full_name, [member.email, member.phone, plan ? plan.name : 'No plan', member.status].filter(Boolean).join(' · '),
+    data.forEach(function (service) {
+      card(list, service.name + ' — R' + Number(service.price).toLocaleString('en-ZA'),
+        (service.is_active ? 'Visible' : 'Hidden') + ' · ' + service.slug,
         function () {
-          editForm(document.getElementById('memberForm'), member, {
-            joined_at: function (date) { return date ? String(date).slice(0, 10) : ''; }
+          editForm(document.getElementById('bookingAddonForm'), service, {
+            is_active: String,
+            sort_order: String
           });
         },
         function () {
-          if (!window.confirm('Delete this member record?')) return;
-          remove('members', member.id).then(function () {
-            return refreshThenMessage('Member record deleted.');
+          if (!window.confirm('Delete this booking add-on service?')) return;
+          remove('booking_addons', service.id).then(function () {
+            return refreshThenMessage('Service deleted.');
           }).catch(showError);
         });
     });
@@ -381,7 +583,7 @@
       { label: 'packages', table: 'packages', column: 'sort_order', render: renderPackages },
       { label: 'website pages', table: 'site_pages', column: 'sort_order', render: renderSitePages },
       { label: 'membership plans', table: 'membership_plans', column: 'sort_order', render: renderPlans },
-      { label: 'members', table: 'members', column: 'full_name', render: renderMembers },
+      { label: 'booking add-on services', table: 'booking_addons', column: 'sort_order', render: renderBookingAddons },
       { label: 'work gallery', table: 'work_gallery', column: 'sort_order', render: renderGallery },
       { label: 'team profiles', table: 'team_members', column: 'sort_order', render: renderTeam }
     ];
@@ -632,23 +834,6 @@
         cta_url: fields[4] || ''
       };
     });
-    values.services = lines(values.services).map(function (line) {
-      var fields = line.split('|').map(function (field) { return field.trim(); });
-      var imageUrl = fields[3] || '';
-      if (!fields[0]) throw new Error('Each service needs a title.');
-      if (imageUrl && !isSafeImageUrl(imageUrl)) {
-        throw new Error('Service images need a full URL or a path starting with /.');
-      }
-      return {
-        title: fields[0],
-        description: fields[1] || '',
-        price_label: fields[2] || '',
-        image_url: imageUrl,
-        features: (fields[4] || '').split(';').map(function (feature) {
-          return feature.trim();
-        }).filter(Boolean)
-      };
-    });
     if (!file && values.hero_image_url && !isSafeImageUrl(values.hero_image_url)) {
       throw new Error('Enter a full image URL or a path starting with /.');
     }
@@ -680,9 +865,6 @@
     var oldUrls = [previous.current_hero_image_url];
     oldUrls = oldUrls.concat(lines(previous.hero_slides).map(function (line) {
       return line.split('|')[2] || '';
-    }));
-    oldUrls = oldUrls.concat(lines(previous.services).map(function (line) {
-      return line.split('|')[3] || '';
     }));
     var currentUrls = [saved.hero_image_url].concat((saved.hero_slides || []).map(function (slide) {
       return slide.image_url;
@@ -762,6 +944,26 @@
         event.currentTarget.form.elements.id.value = '';
       }
     });
+    var pageServiceForm = document.getElementById('pageServiceForm');
+    pageServiceForm.addEventListener('submit', savePageService);
+    pageServiceForm.elements.page_slug.addEventListener('change', function (event) {
+      var pageSlug = event.currentTarget.value;
+      pageServiceForm.reset();
+      pageServiceForm.elements.page_slug.value = pageSlug;
+      renderPageServices();
+    });
+    pageServiceForm.elements.image_url.addEventListener('input', function () {
+      if (pageServiceForm.elements.image_url.value) pageServiceForm.elements.image_file.value = '';
+    });
+    pageServiceForm.elements.image_file.addEventListener('change', function () {
+      if (getFormFile(pageServiceForm, 'image_file')) pageServiceForm.elements.image_url.value = '';
+    });
+    pageServiceForm.addEventListener('reset', function () {
+      var pageSlug = pageServiceForm.elements.page_slug.value;
+      window.setTimeout(function () {
+        pageServiceForm.elements.page_slug.value = pageSlug;
+      }, 0);
+    });
     connectForm('planForm', 'membership_plans', function (values) {
       values.price = number(values.price);
       values.discount_percent = number(values.discount_percent);
@@ -770,9 +972,10 @@
       values.is_active = values.is_active === 'true';
       return values;
     });
-    connectForm('memberForm', 'members', function (values) {
-      values.plan_id = nullableId(values.plan_id);
-      values.joined_at = values.joined_at || undefined;
+    connectForm('bookingAddonForm', 'booking_addons', function (values) {
+      values.price = number(values.price);
+      values.sort_order = number(values.sort_order);
+      values.is_active = values.is_active === 'true';
       return values;
     });
     connectForm('teamForm', 'team_members', uploadTeamPhoto, function (record, previous, saved) {

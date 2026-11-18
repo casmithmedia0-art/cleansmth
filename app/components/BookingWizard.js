@@ -13,12 +13,6 @@ const vehicleTypes = [
   ["luxury", "Luxury / sports"],
   ["minibus", "Minibus / van"],
 ];
-const addonOptions = [
-  ["deep_interior", "Deep Interior", 200],
-  ["carpet_clean", "Carpet", 250],
-  ["mattress_clean", "Mattress", 300],
-];
-
 function money(value) {
   return Number(value || 0).toLocaleString("en-ZA");
 }
@@ -66,7 +60,7 @@ function loadRoutesLibrary() {
   return routesLibraryPromise;
 }
 
-export default function BookingWizard({ packages, selectedPackage, onPackageChange }) {
+export default function BookingWizard({ packages, bookingAddons, selectedPackage, onPackageChange }) {
   const [step, setStep] = useState(1);
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
@@ -94,9 +88,9 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
   const modelName = model === "__other__" ? customModel.trim() : model;
   const vehicleName = [year, make, modelName].filter(Boolean).join(" ");
   const basePrice = Number(packageRecord?.vehicle_prices?.[vehicleSize] || 0);
-  const addonTotal = addons.reduce((total, key) => {
-    const addon = addonOptions.find(([value]) => value === key);
-    return total + (addon ? addon[2] : 0);
+  const addonTotal = addons.reduce((total, slug) => {
+    const addon = bookingAddons.find((item) => item.slug === slug);
+    return total + (addon ? Number(addon.price) : 0);
   }, 0);
   const total = basePrice + addonTotal + (travelEstimate?.fee || 0);
   const priceLabel = useMemo(() => total > 0 ? `R ${money(total)}` : "R —", [total]);
@@ -210,7 +204,7 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
     if (vehicleNotes.trim()) parts.push(`Vehicle notes: ${vehicleNotes.trim()}`);
     parts.push(`Package: ${packageRecord?.name || selectedPackage}`);
     if (addons.length) {
-      parts.push(`Add-ons: ${addons.map((key) => addonOptions.find(([value]) => value === key)?.[1] || key).join(", ")}`);
+      parts.push(`Add-ons: ${addons.map((slug) => bookingAddons.find((item) => item.slug === slug)?.name || slug).join(", ")}`);
     }
     parts.push(`Preferred date & time: ${date} ${time}`, `Address: ${address}`);
     if (travelEstimate) {
@@ -361,12 +355,12 @@ export default function BookingWizard({ packages, selectedPackage, onPackageChan
             </div>
             <div className="addon-options">
               <p className="form-label">Add-on services</p>
-              {addonOptions.map(([key, label, price]) => (
-                <label className="addon-pill" key={key}>
+              {bookingAddons.map(({ slug, name: label, price }) => (
+                <label className="addon-pill" key={slug}>
                   <input
                     type="checkbox"
-                    checked={addons.includes(key)}
-                    onChange={(event) => setAddons((current) => event.target.checked ? [...current, key] : current.filter((item) => item !== key))}
+                    checked={addons.includes(slug)}
+                    onChange={(event) => setAddons((current) => event.target.checked ? [...current, slug] : current.filter((item) => item !== slug))}
                   />
                   {label} (+R{price})
                 </label>

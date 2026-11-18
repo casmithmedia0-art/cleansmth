@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   fallbackWorkGallery,
+  fallbackBookingAddons,
   fallbackMemberships,
   fallbackPackages,
   fallbackPages,
@@ -11,6 +12,7 @@ import {
 export default function usePublicContent() {
   const [packages, setPackages] = useState(fallbackPackages);
   const [memberships, setMemberships] = useState(fallbackMemberships);
+  const [bookingAddons, setBookingAddons] = useState(fallbackBookingAddons);
   const [pages, setPages] = useState(fallbackPages);
   const [gallery, setGallery] = useState(fallbackWorkGallery);
   const [teamMembers, setTeamMembers] = useState([]);
@@ -52,11 +54,11 @@ export default function usePublicContent() {
           }
 
           const merged = { ...fallback, ...page };
-          ["hero_title", "hero_subtitle", "intro", "hero_image_url", "section_title", "callout_title", "callout_text"]
+          ["hero_title", "hero_subtitle", "intro", "section_title", "callout_title", "callout_text"]
             .forEach((field) => {
               if (!String(merged[field] || "").trim()) merged[field] = fallback[field];
             });
-          if (!Array.isArray(merged.services) || !merged.services.length) {
+          if (!Array.isArray(merged.services)) {
             merged.services = fallback.services;
           }
           next[page.slug] = merged;
@@ -67,6 +69,12 @@ export default function usePublicContent() {
 
     load(client.from("packages").select("*").order("sort_order"), "packages", setPackages);
     load(client.from("membership_plans").select("*").order("sort_order"), "membership plans", setMemberships);
+    load(
+      client.from("booking_addons").select("slug, name, price").eq("is_active", true).order("sort_order"),
+      "booking add-on services",
+      setBookingAddons,
+      true,
+    );
     load(
       client.from("site_pages").select("*").order("sort_order"),
       "service page content",
@@ -86,5 +94,5 @@ export default function usePublicContent() {
     );
   }, []);
 
-  return { packages, memberships, pages, gallery, teamMembers };
+  return { packages, memberships, bookingAddons, pages, gallery, teamMembers };
 }
