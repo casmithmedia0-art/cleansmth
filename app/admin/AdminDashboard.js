@@ -64,7 +64,9 @@ export default function AdminDashboard() {
                     </select></label>
                     <label className="full">Primary hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /><span className="muted">Clear the URL and save to remove this image.</span></label>
                     <label className="full">Or upload a hero image<input name="hero_image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
-                    <label className="full">Additional hero slides<textarea name="hero_slides" rows={5} placeholder="Title | Subtitle | Image URL | CTA text | CTA URL" /><span className="muted">One slide per line. Remove a line and save to delete that slide.</span></label>
+                    <div className="full hero-slides-heading"><strong>Additional hero slides</strong><button className="btn secondary" id="addHeroSlide" type="button">Add slide</button></div>
+                    <div className="full hero-slides-list" id="heroSlides" />
+                    <span className="full muted">Choose an image URL or upload an image for each slide. Remove a slide and save to delete it.</span>
                     <label className="full">Call-to-action text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>

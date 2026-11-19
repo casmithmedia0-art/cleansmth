@@ -157,13 +157,72 @@
   function editSitePage(form, page) {
     form.elements.hero_image_file.value = '';
     form.elements.current_hero_image_url.value = page.hero_image_url || '';
-    editForm(form, page, {
-      hero_slides: function (slides) {
-        return (slides || []).map(function (slide) {
-          return [slide.title, slide.subtitle, slide.image_url, slide.cta_text, slide.cta_url].join(' | ');
-        }).join('\n');
-      }
+    editForm(form, page);
+    renderHeroSlideEditors(form, page.hero_slides || []);
+  }
+
+  function heroSlideField(slide, labelText, name, type, placeholder) {
+    var label = make('label', labelText);
+    var input = document.createElement('input');
+    input.type = type;
+    input.dataset.slideField = name;
+    input.value = type === 'file' ? '' : (slide[name] || '');
+    if (placeholder) input.placeholder = placeholder;
+    if (type === 'file') input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    label.appendChild(input);
+    return label;
+  }
+
+  function appendHeroSlideEditor(list, slide, index) {
+    var editor = make('fieldset', undefined, 'hero-slide-editor');
+    editor.dataset.heroSlide = '';
+    var legend = make('legend', 'Slide ' + (index + 1));
+    var fields = make('div', undefined, 'hero-slide-fields');
+    fields.appendChild(heroSlideField(slide, 'Title', 'title', 'text'));
+    fields.appendChild(heroSlideField(slide, 'Subtitle', 'subtitle', 'text'));
+    fields.appendChild(heroSlideField(slide, 'Image URL', 'image_url', 'text', 'https://... or /image.jpg'));
+    fields.appendChild(heroSlideField(slide, 'Or upload an image', 'image_file', 'file'));
+    fields.appendChild(heroSlideField(slide, 'CTA text', 'cta_text', 'text'));
+    fields.appendChild(heroSlideField(slide, 'CTA URL', 'cta_url', 'text'));
+    editor.appendChild(legend);
+    editor.appendChild(fields);
+    editor.appendChild(actionButton('Remove slide', function () {
+      editor.remove();
+      updateHeroSlideNumbers(list);
+    }, true));
+    var imageUrl = fields.querySelector('[data-slide-field="image_url"]');
+    var imageFile = fields.querySelector('[data-slide-field="image_file"]');
+    imageUrl.addEventListener('input', function () {
+      if (imageUrl.value) imageFile.value = '';
     });
+    imageFile.addEventListener('change', function () {
+      if (imageFile.files && imageFile.files.length) imageUrl.value = '';
+    });
+    list.appendChild(editor);
+  }
+
+  function renderHeroSlideEditors(form, slides) {
+    var list = form.querySelector('#heroSlides');
+    list.replaceChildren();
+    slides.filter(function (slide) { return slide && typeof slide === 'object'; })
+      .forEach(function (slide, index) {
+      appendHeroSlideEditor(list, slide, index);
+    });
+    updateHeroSlideNumbers(list);
+  }
+
+  function updateHeroSlideNumbers(list) {
+    list.querySelectorAll('[data-hero-slide]').forEach(function (editor, index) {
+      editor.querySelector('legend').textContent = 'Slide ' + (index + 1);
+    });
+  }
+
+  function heroSlideValues(editor) {
+    var values = {};
+    ['title', 'subtitle', 'image_url', 'cta_text', 'cta_url'].forEach(function (name) {
+      values[name] = String(editor.querySelector('[data-slide-field="' + name + '"]').value || '').trim();
+    });
+    return values;
   }
 
   function renderSitePages(data) {
@@ -815,35 +874,42 @@
   }
 
   function prepareSitePage(values, form) {
-    var file = getFormFile(form, 'hero_image_file');
+    var primaryFile = getFormFile(form, 'hero_image_file');
     delete values.hero_image_file;
     delete values.current_hero_image_url;
     values.hero_image_url = String(values.hero_image_url || '').trim();
     values.hero_cta_text = String(values.hero_cta_text || '').trim();
-    values.hero_slides = lines(values.hero_slides).map(function (line) {
-      var fields = line.split('|').map(function (field) { return field.trim(); });
-      var imageUrl = fields[2] || '';
-      if (!isSafeImageUrl(imageUrl)) {
-        throw new Error('Each hero slide needs a full image URL or a path starting with /.');
-      }
-      return {
-        title: fields[0] || '',
-        subtitle: fields[1] || '',
-        image_url: imageUrl,
-        cta_text: fields[3] || '',
-        cta_url: fields[4] || ''
-      };
-    });
-    if (!file && values.hero_image_url && !isSafeImageUrl(values.hero_image_url)) {
-      throw new Error('Enter a full image URL or a path starting with /.');
-    }
-    if (!file) return values;
-    if (file.type.indexOf('image/') !== 0) {
+    if (primaryFile && primaryFile.type.indexOf('image/') !== 0) {
       throw new Error('Choose a supported image file for the hero image.');
     }
-    return uploadFiles([file], 'hero').then(function (uploads) {
-      values.hero_image_url = uploads[0].url;
-      values._uploaded_paths = [uploads[0].path];
+    if (!primaryFile && values.hero_image_url && !isSafeImageUrl(values.hero_image_url)) {
+      throw new Error('Enter a full image URL or a path starting with /.');
+    }
+
+    var uploads = primaryFile ? [primaryFile] : [];
+    var slideUploadIndexes = [];
+    values.hero_slides = Array.prototype.slice.call(form.querySelectorAll('[data-hero-slide]')).map(function (editor) {
+      var slide = heroSlideValues(editor);
+      var fileInput = editor.querySelector('[data-slide-field="image_file"]');
+      var file = fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
+      if (file && file.type.indexOf('image/') !== 0) {
+        throw new Error('Choose a supported image file for each hero slide.');
+      }
+      if (!file && !isSafeImageUrl(slide.image_url)) {
+        throw new Error('Each hero slide needs an image URL or an uploaded image.');
+      }
+      slideUploadIndexes.push(file ? uploads.length : -1);
+      if (file) uploads.push(file);
+      return slide;
+    });
+    if (!uploads.length) return values;
+    return uploadFiles(uploads, 'hero').then(function (uploaded) {
+      if (primaryFile) values.hero_image_url = uploaded[0].url;
+      values.hero_slides.forEach(function (slide, index) {
+        var uploadIndex = slideUploadIndexes[index];
+        if (uploadIndex >= 0) slide.image_url = uploaded[uploadIndex].url;
+      });
+      values._uploaded_paths = uploaded.map(function (item) { return item.path; });
       return values;
     });
   }
@@ -863,8 +929,9 @@
 
   function cleanupReplacedHeroImage(record, previous, saved) {
     var oldUrls = [previous.current_hero_image_url];
-    oldUrls = oldUrls.concat(lines(previous.hero_slides).map(function (line) {
-      return line.split('|')[2] || '';
+    var oldPage = sitePages.find(function (page) { return page.slug === saved.slug; });
+    oldUrls = oldUrls.concat((oldPage && oldPage.hero_slides || []).map(function (slide) {
+      return slide && slide.image_url;
     }));
     var currentUrls = [saved.hero_image_url].concat((saved.hero_slides || []).map(function (slide) {
       return slide.image_url;
@@ -928,6 +995,15 @@
     var sitePageForm = document.getElementById('sitePageForm');
     var heroImageUrl = sitePageForm.elements.hero_image_url;
     var heroImageFile = sitePageForm.elements.hero_image_file;
+    document.getElementById('addHeroSlide').addEventListener('click', function () {
+      var list = sitePageForm.querySelector('#heroSlides');
+      appendHeroSlideEditor(list, {}, list.querySelectorAll('[data-hero-slide]').length);
+      updateHeroSlideNumbers(list);
+      list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    sitePageForm.addEventListener('reset', function () {
+      window.setTimeout(function () { renderHeroSlideEditors(sitePageForm, []); }, 0);
+    });
     heroImageUrl.addEventListener('input', function () {
       if (heroImageUrl.value) heroImageFile.value = '';
     });
@@ -942,6 +1018,7 @@
         event.currentTarget.form.reset();
         event.currentTarget.form.elements.slug.value = slug;
         event.currentTarget.form.elements.id.value = '';
+        renderHeroSlideEditors(event.currentTarget.form, []);
       }
     });
     var pageServiceForm = document.getElementById('pageServiceForm');
