@@ -110,7 +110,7 @@ export const fallbackWorkGallery = [
   { title: "Lawn and garden care", alt_text: "Garden lawn and planted borders", media_url: "https://images.unsplash.com/photo-1599685315640-7ec1c5537b7f?auto=format&fit=crop&w=1200&q=80", media_type: "image", service_slug: "gardening" },
 ];
 
-export function getPageHeroSlides(page, fallbackImages = []) {
+export function getPageHeroSlides(page) {
   const additionalSlides = Array.isArray(page.hero_slides)
     ? page.hero_slides.filter((slide) => slide && typeof slide === "object")
     : [];
@@ -125,12 +125,6 @@ export function getPageHeroSlides(page, fallbackImages = []) {
     ...(primarySlide.image_url ? [primarySlide] : []),
     ...additionalSlides,
   ];
-  if (slides.length < 2) {
-    const existingImages = new Set(slides.map((slide) => slide.image_url).filter(Boolean));
-    const generatedSlides = [...new Set(fallbackImages.filter((imageUrl) => imageUrl && !existingImages.has(imageUrl)))]
-      .map((image_url) => ({ image_url }));
-    slides.push(...generatedSlides);
-  }
   if (!slides.length) slides.push(primarySlide);
 
   return slides.map((slide) => ({

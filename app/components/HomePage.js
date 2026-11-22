@@ -130,10 +130,7 @@ export default function HomePage() {
   const [selectedPackage, setSelectedPackage] = useState("");
   const carWashGallery = gallery.filter((item) => (item.service_slug || "car-wash") === "car-wash");
   const carWashPackages = packages.filter((item) => (item.service_slug || "car-wash") === "car-wash");
-  const heroSlides = getPageHeroSlides(
-    page,
-    (page.services || []).map((service) => service.image_url),
-  );
+  const heroSlides = getPageHeroSlides(page);
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const heroImage = safeImageUrl(activeSlide.image_url);
   const services = Array.isArray(page.services) ? page.services : [];

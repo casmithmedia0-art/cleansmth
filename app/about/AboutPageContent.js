@@ -22,10 +22,7 @@ function safeActionUrl(value) {
 export default function AboutPageContent() {
   const { pages, teamMembers } = usePublicContent();
   const page = pages.about;
-  const heroSlides = getPageHeroSlides(
-    page,
-    (pages["car-wash"].services || []).map((service) => service.image_url),
-  );
+  const heroSlides = getPageHeroSlides(page);
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const storyParagraphs = String(page.intro || "").split(/\n\s*\n/).filter(Boolean);
   const heroImageUrl = safeImageUrl(activeSlide.image_url);
