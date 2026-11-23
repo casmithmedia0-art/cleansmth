@@ -788,6 +788,16 @@
   font-size: 1.1rem;
 }
 
+.sneaker-service-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-top: 14px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .sneaker-service-card ul {
   display: grid;
   gap: 8px;

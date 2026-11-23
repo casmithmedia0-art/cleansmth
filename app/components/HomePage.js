@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import BookingWizard from "./BookingWizard";
 import FAQSection from "./FAQSection";
-import GoogleReviews from "./GoogleReviews";
 import PoweredBy from "./PoweredBy";
 import SiteHeader from "./SiteHeader";
 import WorkGallery from "./WorkGallery";
@@ -244,7 +243,7 @@ export default function HomePage() {
           <div className="section-inner sneaker-upsell-inner">
             <div>
               <p className="section-label">Add a little extra</p>
-              <h2>Add a Classic Cleanse to any car wash booking</h2>
+              <h2>Add a Classic cleaning to any car wash booking</h2>
               <p>Refresh your sneakers while your car gets cleaned. R100 per pair; final price confirmed before work starts.</p>
             </div>
             <Link href="/sneaker-cleaning" className="btn-primary">Add a sneaker clean</Link>
@@ -267,14 +266,6 @@ export default function HomePage() {
             <h2 className="section-title">CLEANSMITH <span className="gold">VIP</span></h2>
             <p className="section-sub">Join the VIP program for priority service and exclusive discounts.</p>
             <MembershipCards memberships={memberships} />
-          </div>
-        </section>
-        <div className="glow-line" />
-        <section className="google-reviews-section" id="reviews">
-          <div className="section-inner">
-            <div className="section-label fade-up">Google reviews</div>
-            <h2 className="section-title fade-up">What clients <span className="cyan">say</span></h2>
-            <GoogleReviews />
           </div>
         </section>
         <div className="glow-line" />
@@ -323,7 +314,6 @@ export default function HomePage() {
             <div className="footer-title">Company</div>
             <ul className="footer-links">
               <li><Link href="/about">About us</Link></li>
-              <li><Link href="/#reviews">Reviews</Link></li>
               <li><Link href="/#gallery">Gallery</Link></li>
               <li><Link href="/terms">Terms</Link></li>
               <li><Link href="/privacy">Privacy</Link></li>

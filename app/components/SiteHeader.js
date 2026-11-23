@@ -63,7 +63,6 @@ export default function SiteHeader({ variant = "service", activePage = "" }) {
             { href: "/#packages", label: "Packages" },
             serviceLinks[4],
             { href: "/#booking", label: "Book now" },
-            { href: "/#reviews", label: "Reviews" },
             { href: "/#contact", label: "Contact" },
           ].map((item) => (
             <Link href={item.href} key={item.label} onClick={() => setMenuOpen(false)}>

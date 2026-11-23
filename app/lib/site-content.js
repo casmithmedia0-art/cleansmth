@@ -63,7 +63,11 @@ export const fallbackPages = {
     section_title: "Sneaker-cleaning services",
     callout_title: "Ready to refresh your sneakers?",
     callout_text: "Book a clean or send us photos of your shoes for a repair quote.",
-    services: [],
+    services: [
+      { title: "Classic cleaning", description: "An everyday refresh for sneakers and shoes.", price_label: "R100 per pair", image_url: "", features: ["Upper, midsole and undersole", "Laces cleaned"] },
+      { title: "Premium footwear detailing", description: "Deep clean and protect for premium footwear.", price_label: "R200 per pair", image_url: "", features: ["Deep clean inside and out", "VIS Protector Spray finish"] },
+      { title: "Sneaker & Shoe Repairs", description: "Sole repairs, glue-downs, stitching and more.", price_label: "Free quote", image_url: "", features: ["Repairs priced individually", "Send photos for an assessment"] },
+    ],
   },
   about: {
     slug: "about",

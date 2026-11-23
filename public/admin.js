@@ -129,7 +129,8 @@
     var serviceNames = {
       'car-wash': 'Car wash',
       'home-cleaning': 'Home cleaning',
-      gardening: 'Gardening'
+      gardening: 'Gardening',
+      'sneaker-cleaning': 'Sneaker Cleaning'
     };
     list.replaceChildren();
     data.forEach(function (pkg) {
@@ -613,7 +614,8 @@
     var serviceNames = {
       'car-wash': 'Car wash',
       'home-cleaning': 'Home cleaning',
-      gardening: 'Gardening'
+      gardening: 'Gardening',
+      'sneaker-cleaning': 'Sneaker Cleaning'
     };
     data.forEach(function (work) {
       var preview;

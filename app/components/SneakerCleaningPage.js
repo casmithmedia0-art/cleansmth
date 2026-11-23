@@ -5,19 +5,20 @@ import { useState } from "react";
 import FAQSection from "./FAQSection";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
+import WorkGallery from "./WorkGallery";
 import { getPageHeroSlides } from "../lib/site-content";
 import useHeroCarousel from "../lib/useHeroCarousel";
 import usePublicContent from "../lib/usePublicContent";
 
-const services = [
+const fallbackServices = [
   {
-    title: "Classic Cleanse",
+    title: "Classic cleaning",
     description: "An everyday refresh for sneakers and shoes.",
     price: "R100 per pair",
     features: ["Upper, midsole and undersole", "Laces cleaned"],
   },
   {
-    title: "Red Detail",
+    title: "Premium footwear detailing",
     description: "Premium footwear detailing: deep clean and protect.",
     price: "R200 per pair",
     features: ["Deep clean inside and out", "VIS Protector Spray finish"],
@@ -148,8 +149,12 @@ function RepairQuoteForm() {
 }
 
 export default function SneakerCleaningPage() {
-  const { pages } = usePublicContent();
+  const { pages, gallery } = usePublicContent();
   const page = pages["sneaker-cleaning"];
+  const services = Array.isArray(page.services) && page.services.length
+    ? page.services
+    : fallbackServices;
+  const sneakerGallery = gallery.filter((item) => item.service_slug === "sneaker-cleaning");
   const slides = getPageHeroSlides(page);
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(slides);
   const heroImage = safeMediaUrl(activeSlide.image_url);
@@ -208,7 +213,10 @@ export default function SneakerCleaningPage() {
                   <span className="service-card-number">{String(index + 1).padStart(2, "0")}</span>
                   <h3>{service.title}</h3>
                   <p>{service.description}</p>
-                  <strong>{service.price}</strong>
+                  {service.image_url ? (
+                    <img className="sneaker-service-image" src={service.image_url} alt={service.title || "CLEANSMITH sneaker service"} loading="lazy" />
+                  ) : null}
+                  <strong>{service.price || service.price_label}</strong>
                   <ul>{service.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
                 </article>
               ))}
@@ -219,15 +227,15 @@ export default function SneakerCleaningPage() {
         <section className="service-page-section sneaker-comparison-section">
           <div className="service-section-inner">
             <p className="service-page-eyebrow">Choose your clean</p>
-            <h2>Classic Cleanse vs Red Detail</h2>
+            <h2>Classic cleaning vs Premium footwear detailing</h2>
             <p className="service-page-intro">Not sure which one you need? Here is how the two cleans compare.</p>
-            <div className="sneaker-comparison-scroll" role="region" aria-label="Classic Cleanse and Red Detail comparison" tabIndex="0">
+            <div className="sneaker-comparison-scroll" role="region" aria-label="Classic cleaning and Premium footwear detailing comparison" tabIndex="0">
               <table className="sneaker-comparison-table">
                 <thead>
                   <tr>
                     <th scope="col">What&apos;s included</th>
-                    <th scope="col">Classic Cleanse</th>
-                    <th scope="col">Red Detail</th>
+                    <th scope="col">Classic cleaning</th>
+                    <th scope="col">Premium footwear detailing</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -282,11 +290,17 @@ export default function SneakerCleaningPage() {
           <div className="service-section-inner">
             <p className="service-page-eyebrow">Our work</p>
             <h2>Sneaker before &amp; after</h2>
-            <p className="service-page-intro">Real customer before-and-after photos will be added here.</p>
-            <div className="sneaker-photo-grid" aria-label="Sneaker before-and-after photo placeholders">
-              <div className="sneaker-photo-placeholder"><span>Before</span><strong>Sneaker photo coming soon</strong></div>
-              <div className="sneaker-photo-placeholder"><span>After</span><strong>Sneaker photo coming soon</strong></div>
-            </div>
+            {sneakerGallery.length ? (
+              <WorkGallery items={sneakerGallery} emptyMessage="Real sneaker before-and-after photos will be added here." />
+            ) : (
+              <>
+                <p className="service-page-intro">Real customer before-and-after photos will be added here.</p>
+                <div className="sneaker-photo-grid" aria-label="Sneaker before-and-after photo placeholders">
+                  <div className="sneaker-photo-placeholder"><span>Before</span><strong>Sneaker photo coming soon</strong></div>
+                  <div className="sneaker-photo-placeholder"><span>After</span><strong>Sneaker photo coming soon</strong></div>
+                </div>
+              </>
+            )}
           </div>
         </section>
 

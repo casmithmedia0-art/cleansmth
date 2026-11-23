@@ -67,19 +67,6 @@
   #home-page .pkg-card.featured::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.03),transparent);mix-blend-mode:overlay;pointer-events:none;animation:shimmer 4s linear infinite}
   @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
   #home-page .pill{background:rgba(255,255,255,.04);padding:6px 8px;border-radius:999px;font-size:.8rem;color:var(--white-text)}
-  #home-page .google-reviews-feed{margin-top:28px}
-  #home-page .google-reviews-summary{display:flex;align-items:center;gap:18px;margin-bottom:24px}
-  #home-page .google-reviews-summary>strong{font-family:var(--font-display);font-size:clamp(2.5rem,5vw,4rem);line-height:1;color:var(--white)}
-  #home-page .google-reviews-summary p{margin:4px 0 0;color:var(--white-text);font-size:.9rem}
-  #home-page .google-review-stars{color:#ffd700;letter-spacing:2px}
-  #home-page .google-review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
-  #home-page .google-review-card{display:flex;flex-direction:column;gap:14px;min-width:0;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))}
-  #home-page .google-review-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-  #home-page .google-review-header h3{margin:0;font-family:var(--font-heading);font-size:1.05rem}
-  #home-page .google-review-header time{display:block;margin-top:3px;color:var(--white-text);font-size:.78rem}
-  #home-page .google-review-card>p{margin:0;color:var(--white-text);line-height:1.7;white-space:pre-line}
-  #home-page .google-review-source{margin-top:auto;color:var(--cyan);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-  #home-page .google-reviews-status{margin:24px 0;color:var(--white-text)}
   /* GALLERY */
   #home-page .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:24px;align-items:start}
   #home-page .gallery-item{overflow:hidden;border-radius:10px;background:rgba(255,255,255,0.02)}

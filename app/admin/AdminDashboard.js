@@ -107,6 +107,7 @@ export default function AdminDashboard() {
                       <option value="car-wash">Car wash</option>
                       <option value="home-cleaning">Home cleaning</option>
                       <option value="gardening">Gardening</option>
+                      <option value="sneaker-cleaning">Sneaker Cleaning</option>
                     </select></label>
                     <label>Package name<input name="name" required /></label>
                     <label>URL slug<input name="slug" pattern="[a-z0-9-]+" required /></label>
@@ -162,6 +163,7 @@ export default function AdminDashboard() {
                     <option value="car-wash">Car wash</option>
                     <option value="home-cleaning">Home cleaning</option>
                     <option value="gardening">Gardening</option>
+                    <option value="sneaker-cleaning">Sneaker Cleaning</option>
                   </select></label>
                   <label className="full">Service title<input name="title" required /></label>
                   <label className="full">Description<textarea name="description" rows={4} /></label>
@@ -202,6 +204,7 @@ export default function AdminDashboard() {
                     <option value="car-wash">Car wash</option>
                     <option value="home-cleaning">Home cleaning</option>
                     <option value="gardening">Gardening</option>
+                    <option value="sneaker-cleaning">Sneaker Cleaning</option>
                   </select></label>
                   <label className="full">Title<input name="title" required /></label><label className="full">Caption<input name="caption" /></label>
                   <label>Gallery type<select name="media_type">
