@@ -119,6 +119,11 @@
     return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url);
   }
 
+  function isSafeMediaUrl(value) {
+    var url = String(value || '');
+    return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url);
+  }
+
   function renderPackages(data) {
     var list = document.getElementById('packageList');
     var serviceNames = {
@@ -168,7 +173,8 @@
     input.dataset.slideField = name;
     input.value = type === 'file' ? '' : (slide[name] || '');
     if (placeholder) input.placeholder = placeholder;
-    if (type === 'file') input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    if (type === 'file' && name === 'image_file') input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    if (type === 'file' && name === 'video_file') input.accept = 'video/mp4,video/webm';
     label.appendChild(input);
     return label;
   }
@@ -180,8 +186,10 @@
     var fields = make('div', undefined, 'hero-slide-fields');
     fields.appendChild(heroSlideField(slide, 'Title', 'title', 'text'));
     fields.appendChild(heroSlideField(slide, 'Subtitle', 'subtitle', 'text'));
-    fields.appendChild(heroSlideField(slide, 'Image URL', 'image_url', 'text', 'https://... or /image.jpg'));
+    fields.appendChild(heroSlideField(slide, 'Image URL or video poster', 'image_url', 'text', 'https://... or /image.jpg'));
     fields.appendChild(heroSlideField(slide, 'Or upload an image', 'image_file', 'file'));
+    fields.appendChild(heroSlideField(slide, 'Short video URL (MP4 or WebM)', 'video_url', 'text', 'https://... or /clip.mp4'));
+    fields.appendChild(heroSlideField(slide, 'Or upload a short video (max 25 MB)', 'video_file', 'file'));
     fields.appendChild(heroSlideField(slide, 'CTA text', 'cta_text', 'text'));
     fields.appendChild(heroSlideField(slide, 'CTA URL', 'cta_url', 'text'));
     editor.appendChild(legend);
@@ -192,11 +200,23 @@
     }, true));
     var imageUrl = fields.querySelector('[data-slide-field="image_url"]');
     var imageFile = fields.querySelector('[data-slide-field="image_file"]');
+    var videoUrl = fields.querySelector('[data-slide-field="video_url"]');
+    var videoFile = fields.querySelector('[data-slide-field="video_file"]');
     imageUrl.addEventListener('input', function () {
       if (imageUrl.value) imageFile.value = '';
     });
     imageFile.addEventListener('change', function () {
-      if (imageFile.files && imageFile.files.length) imageUrl.value = '';
+      if (imageFile.files && imageFile.files.length) {
+        imageUrl.value = '';
+        videoUrl.value = '';
+        videoFile.value = '';
+      }
+    });
+    videoUrl.addEventListener('input', function () {
+      if (videoUrl.value) videoFile.value = '';
+    });
+    videoFile.addEventListener('change', function () {
+      if (videoFile.files && videoFile.files.length) videoUrl.value = '';
     });
     list.appendChild(editor);
   }
@@ -219,7 +239,7 @@
 
   function heroSlideValues(editor) {
     var values = {};
-    ['title', 'subtitle', 'image_url', 'cta_text', 'cta_url'].forEach(function (name) {
+    ['title', 'subtitle', 'image_url', 'video_url', 'cta_text', 'cta_url'].forEach(function (name) {
       values[name] = String(editor.querySelector('[data-slide-field="' + name + '"]').value || '').trim();
     });
     return values;
@@ -234,6 +254,7 @@
       'car-wash': 'Car Wash',
       'home-cleaning': 'Home Cleaning',
       gardening: 'Gardening',
+      'sneaker-cleaning': 'Sneaker Cleaning',
       about: 'About Us'
     };
     var selectedSlug = select.value || 'car-wash';
@@ -890,24 +911,56 @@
     var slideUploadIndexes = [];
     values.hero_slides = Array.prototype.slice.call(form.querySelectorAll('[data-hero-slide]')).map(function (editor) {
       var slide = heroSlideValues(editor);
-      var fileInput = editor.querySelector('[data-slide-field="image_file"]');
-      var file = fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
-      if (file && file.type.indexOf('image/') !== 0) {
+      var imageInput = editor.querySelector('[data-slide-field="image_file"]');
+      var videoInput = editor.querySelector('[data-slide-field="video_file"]');
+      var imageFile = imageInput.files && imageInput.files.length ? imageInput.files[0] : null;
+      var videoFile = videoInput.files && videoInput.files.length ? videoInput.files[0] : null;
+      if (imageFile && imageFile.type.indexOf('image/') !== 0) {
         throw new Error('Choose a supported image file for each hero slide.');
       }
-      if (!file && !isSafeImageUrl(slide.image_url)) {
-        throw new Error('Each hero slide needs an image URL or an uploaded image.');
+      if (videoFile && !/^video\/(mp4|webm)$/i.test(videoFile.type)) {
+        throw new Error('Hero clips must be MP4 or WebM videos.');
       }
-      slideUploadIndexes.push(file ? uploads.length : -1);
-      if (file) uploads.push(file);
+      if (videoFile && videoFile.size > 25 * 1024 * 1024) {
+        throw new Error('Hero clips must be 25 MB or smaller.');
+      }
+      if (videoFile && slide.video_url) {
+        throw new Error('Choose either a video URL or a video upload for each slide.');
+      }
+      if (imageFile && slide.image_url) {
+        throw new Error('Choose either an image URL or an image upload for each slide.');
+      }
+      if (slide.image_url && !isSafeImageUrl(slide.image_url)) {
+        throw new Error('Enter a full image URL or a path starting with /.');
+      }
+      if (slide.video_url && !isSafeMediaUrl(slide.video_url)) {
+        throw new Error('Enter a full video URL or a path starting with /.');
+      }
+      if (imageFile && videoFile) {
+        throw new Error('Choose one hero media file per slide.');
+      }
+      if (!imageFile && !slide.image_url && !videoFile && !slide.video_url) {
+        throw new Error('Each hero slide needs an image or a video.');
+      }
+      var indexes = { image: -1, video: -1 };
+      if (imageFile) {
+        indexes.image = uploads.length;
+        uploads.push(imageFile);
+      }
+      if (videoFile) {
+        indexes.video = uploads.length;
+        uploads.push(videoFile);
+      }
+      slideUploadIndexes.push(indexes);
       return slide;
     });
     if (!uploads.length) return values;
     return uploadFiles(uploads, 'hero').then(function (uploaded) {
       if (primaryFile) values.hero_image_url = uploaded[0].url;
       values.hero_slides.forEach(function (slide, index) {
-        var uploadIndex = slideUploadIndexes[index];
-        if (uploadIndex >= 0) slide.image_url = uploaded[uploadIndex].url;
+        var uploadIndexes = slideUploadIndexes[index];
+        if (uploadIndexes.image >= 0) slide.image_url = uploaded[uploadIndexes.image].url;
+        if (uploadIndexes.video >= 0) slide.video_url = uploaded[uploadIndexes.video].url;
       });
       values._uploaded_paths = uploaded.map(function (item) { return item.path; });
       return values;
@@ -933,8 +986,13 @@
     oldUrls = oldUrls.concat((oldPage && oldPage.hero_slides || []).map(function (slide) {
       return slide && slide.image_url;
     }));
+    oldUrls = oldUrls.concat((oldPage && oldPage.hero_slides || []).map(function (slide) {
+      return slide && slide.video_url;
+    }));
     var currentUrls = [saved.hero_image_url].concat((saved.hero_slides || []).map(function (slide) {
       return slide.image_url;
+    })).concat((saved.hero_slides || []).map(function (slide) {
+      return slide.video_url;
     })).concat((saved.services || []).map(function (service) { return service.image_url; }));
     var currentPaths = currentUrls.map(heroStoragePath);
     var pathsToRemove = oldUrls.map(heroStoragePath).filter(function (path) {

@@ -12,6 +12,11 @@ function safeImageUrl(value) {
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
 }
 
+function safeMediaUrl(value) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
+}
+
 function safeActionUrl(value) {
   const url = String(value || "").trim();
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) || /^(mailto|tel):/i.test(url)
@@ -26,13 +31,20 @@ export default function AboutPageContent() {
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const storyParagraphs = String(page.intro || "").split(/\n\s*\n/).filter(Boolean);
   const heroImageUrl = safeImageUrl(activeSlide.image_url);
+  const heroVideoUrl = safeMediaUrl(activeSlide.video_url);
 
   return (
     <main className={styles.page}>
       <SiteHeader variant="service" activePage="about" />
 
       <section className={styles.hero} aria-labelledby="story-title">
-        {heroImageUrl ? <img key={activeIndex} className={`${styles.heroImage} hero-slide-image`} src={heroImageUrl} alt="" aria-hidden="true" /> : null}
+        {heroVideoUrl ? (
+          <video key={activeIndex} className={`${styles.heroImage} ${styles.heroVideo}`} aria-label="Play CLEANSMITH story video" muted loop playsInline controls preload="none" poster={heroImageUrl || "/bike.jpeg"}>
+            <source src={heroVideoUrl} />
+          </video>
+        ) : heroImageUrl ? (
+          <img key={activeIndex} className={`${styles.heroImage} hero-slide-image`} src={heroImageUrl} alt="" aria-hidden="true" />
+        ) : null}
         <div className={`${styles.heroContent} hero-slide-copy`} key={activeIndex}>
           <p className={styles.eyebrow}>Our story</p>
           <h1 id="story-title">{activeSlide.title || page.hero_title}</h1>
@@ -99,6 +111,12 @@ export default function AboutPageContent() {
       <footer className={styles.footer}>
         <a href="/">CLEANSMITH</a>
         <a href="/#booking">Book your car wash</a>
+        <a href="/sneaker-cleaning">Sneaker cleaning</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <span>Operating hours: Daily, 07:00–17:00</span>
+        <span>Cancellations: Please contact us as early as possible. Final price confirmed before work starts; payment details confirmed when booking.</span>
+        <span>© {new Date().getFullYear()} CLEANSMITH. All rights reserved.</span>
         <PoweredBy />
       </footer>
     </main>

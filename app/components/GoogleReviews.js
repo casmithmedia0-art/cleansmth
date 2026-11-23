@@ -3,6 +3,29 @@
 import { useEffect, useState } from "react";
 
 const reviewsUrl = "https://cleansmith.revue.us/reviews";
+const fallbackReviews = [
+  {
+    id: "barry-buzz-venter",
+    author: "Barry Buzz Venter",
+    text: "Excellent Work, Wow! My car is an old girl, but shes never looked this good! Thank You Caleb",
+    date: "2026-11-13",
+    rating: 5,
+  },
+  {
+    id: "joe-kwarteng",
+    author: "Joe Kwarteng",
+    text: "Very hard working guys I enjoyed their service keep it up",
+    date: "2026-10-11",
+    rating: 5,
+  },
+  {
+    id: "marius-brits",
+    author: "Marius Brits",
+    text: "Great Service! Very happy with the car wash they do every two weeks for us!",
+    date: "2026-08-03",
+    rating: 5,
+  },
+];
 
 function isLocalBusiness(value) {
   if (!value || typeof value !== "object") return false;
@@ -117,8 +140,18 @@ export default function GoogleReviews() {
     return () => controller.abort();
   }, []);
 
-  if (error) return <p className="google-reviews-status" role="status">{error}</p>;
-  if (!data) return <p className="google-reviews-status" role="status">Loading Google reviews…</p>;
+  if (error || !data) {
+    return (
+      <div className="google-reviews-feed">
+        <p className="google-reviews-status" role="status">
+          {error ? "Recent Google reviews" : "Recent customer reviews"}
+        </p>
+        <div className="google-review-grid">
+          {fallbackReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="google-reviews-feed" aria-live="polite">
@@ -136,7 +169,9 @@ export default function GoogleReviews() {
           {data.reviews.map((review) => <ReviewCard key={review.id} review={review} />)}
         </div>
       ) : (
-        <p className="google-reviews-status">No Google reviews are available yet.</p>
+        <div className="google-review-grid">
+          {fallbackReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
+        </div>
       )}
     </div>
   );

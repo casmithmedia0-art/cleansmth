@@ -60,6 +60,23 @@ export default function usePublicContent() {
             });
           if (!Array.isArray(merged.services)) {
             merged.services = fallback.services;
+          } else if (page.slug === "car-wash") {
+            const exteriorImage = merged.services.find((service) => service.title === "Exterior Car Wash")?.image_url;
+            merged.services = merged.services.map((service) => {
+              const normalized = { ...service };
+              if (normalized.price_label === "Ask us for a quote") {
+                const prices = {
+                  "Exterior Car Wash": "From R250",
+                  "Full Valet": "From R500",
+                  "Interior Deep Clean": "From R200",
+                };
+                normalized.price_label = prices[normalized.title] || "Price confirmed for your vehicle";
+              }
+              if (normalized.title === "Vehicle Detailing" && normalized.image_url === exteriorImage) {
+                normalized.image_url = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=960&q=80";
+              }
+              return normalized;
+            });
           }
           next[page.slug] = merged;
         });

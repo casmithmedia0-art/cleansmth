@@ -490,6 +490,8 @@
 
 .service-footer {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -502,6 +504,12 @@
 .service-footer a {
   color: inherit;
   text-decoration: none;
+}
+
+.service-footer span {
+  max-width: 380px;
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 900px) {
@@ -701,5 +709,393 @@
   .hero-slide-image,
   .hero-slide-copy {
     animation: none;
+  }
+}
+
+.service-hero-video,
+.sneaker-hero-video {
+  z-index: 0;
+  pointer-events: auto;
+}
+
+.sneaker-page .service-page-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.sneaker-page .service-page-hero h1 {
+  max-width: 860px;
+}
+
+.sneaker-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sneaker-repair-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sneaker-repair-actions .service-hero-cta {
+  margin-top: 20px;
+}
+
+.sneaker-hero-actions .service-hero-cta {
+  margin-top: 24px;
+}
+
+.service-hero-cta.secondary {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(10, 27, 46, 0.45);
+  color: #fff;
+}
+
+.sneaker-service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.sneaker-service-card {
+  min-width: 0;
+  border: 1px solid rgba(32, 207, 255, 0.17);
+  border-radius: 14px;
+  padding: 24px;
+  background: linear-gradient(145deg, rgba(32, 207, 255, 0.07), rgba(255, 255, 255, 0.025));
+}
+
+.sneaker-service-card h3,
+.sneaker-step h3,
+.repair-form-panel h3 {
+  margin: 8px 0;
+  font-family: "Rajdhani", Arial, sans-serif;
+  font-size: 1.4rem;
+}
+
+.sneaker-service-card > p,
+.sneaker-step h3 {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.sneaker-service-card > strong {
+  display: block;
+  margin-top: 14px;
+  color: #20cfff;
+  font-size: 1.1rem;
+}
+
+.sneaker-service-card ul {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 16px 0 0 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.sneaker-comparison-scroll {
+  margin-top: 28px;
+  overflow-x: auto;
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+  -webkit-overflow-scrolling: touch;
+}
+
+.sneaker-comparison-scroll:focus-visible {
+  outline: 2px solid #20cfff;
+  outline-offset: 3px;
+}
+
+.sneaker-comparison-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.035);
+  text-align: left;
+}
+
+.sneaker-comparison-table th,
+.sneaker-comparison-table td {
+  padding: 15px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sneaker-comparison-table thead th {
+  background: #102b46;
+  color: #fff;
+  font-family: "Rajdhani", Arial, sans-serif;
+  font-size: 1.08rem;
+}
+
+.sneaker-comparison-table thead th:last-child {
+  background: #a51f36;
+}
+
+.sneaker-comparison-table thead th:first-child {
+  border-top-left-radius: 14px;
+}
+
+.sneaker-comparison-table thead th:last-child {
+  border-top-right-radius: 14px;
+}
+
+.sneaker-comparison-table tbody th {
+  width: 42%;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 600;
+}
+
+.sneaker-comparison-table tbody td {
+  color: rgba(255, 255, 255, 0.76);
+  text-align: center;
+}
+
+.sneaker-comparison-table tbody tr:last-child th,
+.sneaker-comparison-table tbody tr:last-child td {
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.comparison-yes {
+  color: #20cfff;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.comparison-no {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 1.1rem;
+}
+
+.sneaker-price-note {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.63);
+  font-size: 0.9rem;
+}
+
+.sneaker-repair-section {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.sneaker-repair-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: clamp(24px, 5vw, 64px);
+}
+
+.repair-form-panel {
+  border: 1px solid rgba(32, 207, 255, 0.17);
+  border-radius: 14px;
+  padding: clamp(18px, 3vw, 28px);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.repair-quote-form {
+  margin-top: 18px;
+}
+
+.repair-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.repair-form-grid label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.repair-form-grid input,
+.repair-form-grid textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  padding: 11px 12px;
+  background: rgba(0, 0, 0, 0.14);
+  color: #fff;
+}
+
+.repair-form-grid input[type="file"] {
+  padding: 9px;
+}
+
+.repair-form-grid input:focus,
+.repair-form-grid textarea:focus {
+  border-color: #20cfff;
+  outline: 2px solid rgba(32, 207, 255, 0.2);
+}
+
+.repair-form-grid input::file-selector-button {
+  margin-right: 10px;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 9px;
+  background: #20cfff;
+  color: #0a1b2e;
+  font-weight: 700;
+}
+
+.repair-form-wide {
+  grid-column: 1 / -1;
+}
+
+.repair-form-help,
+.repair-form-status {
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.83rem;
+  font-weight: 400;
+}
+
+.repair-form-status {
+  min-height: 1.4em;
+  margin: 10px 0 0;
+}
+
+.repair-form-status.error {
+  color: #ff9a9a;
+}
+
+.sneaker-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.sneaker-step {
+  min-height: 150px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.sneaker-step > span {
+  color: #20cfff;
+  font-family: "Rajdhani", Arial, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.sneaker-step h3 {
+  margin-top: 14px;
+}
+
+.sneaker-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.sneaker-photo-placeholder {
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed rgba(32, 207, 255, 0.45);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(32, 207, 255, 0.06), rgba(255, 255, 255, 0.02));
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.sneaker-photo-placeholder span {
+  color: #20cfff;
+  font-family: "Rajdhani", Arial, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.sneaker-final-cta {
+  background: linear-gradient(130deg, rgba(32, 207, 255, 0.1), rgba(165, 31, 54, 0.13));
+  text-align: center;
+}
+
+.sneaker-final-cta h2 {
+  margin: 0;
+}
+
+.sneaker-final-cta .sneaker-hero-actions {
+  justify-content: center;
+}
+
+.sneaker-page .service-footer {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.legal-copy {
+  max-width: 860px;
+}
+
+.legal-copy h2 {
+  margin: 28px 0 8px;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.legal-copy h2:first-child {
+  margin-top: 0;
+}
+
+.legal-copy p {
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.8;
+}
+
+.legal-copy a {
+  color: #20cfff;
+}
+
+@media (max-width: 850px) {
+  .sneaker-service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sneaker-repair-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .sneaker-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .sneaker-photo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .repair-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .repair-form-wide {
+    grid-column: auto;
+  }
+
+  .sneaker-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sneaker-hero-actions .service-hero-cta {
+    text-align: center;
   }
 }

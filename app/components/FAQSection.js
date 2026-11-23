@@ -53,12 +53,35 @@ const faqsByService = {
       answer: "Green-waste handling is agreed in advance as part of the work scope.",
     },
   ],
+  "sneaker-cleaning": [
+    {
+      question: "How long does sneaker cleaning take?",
+      answer: "Turnaround depends on the service and the condition of the shoes. We will confirm an estimated collection time when you book.",
+    },
+    {
+      question: "Which materials can you clean?",
+      answer: "We can assess leather, suede, canvas, and knit footwear. Treatment is chosen for the material and condition of each pair.",
+    },
+    {
+      question: "What does VIS Protector Spray do?",
+      answer: "It adds a protective finish intended to help repel everyday moisture and dirt. It does not make footwear stain-proof.",
+    },
+    {
+      question: "Do you collect and deliver?",
+      answer: "Collection availability depends on your area and booking. Message us on WhatsApp to check your suburb.",
+    },
+    {
+      question: "Can you repair shoes as well as clean them?",
+      answer: "Yes. Sole repairs, glue-downs, stitching, and other repairs are assessed and quoted individually. Send us photos for a free quote.",
+    },
+  ],
 };
 
 const serviceNames = {
   "car-wash": "Car wash",
   "home-cleaning": "Home cleaning",
   gardening: "Gardening",
+  "sneaker-cleaning": "Sneaker cleaning",
 };
 
 export default function FAQSection({ service }) {

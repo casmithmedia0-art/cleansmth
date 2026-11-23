@@ -25,6 +25,7 @@ export default function ServicePage({ slug }) {
   const heroSlides = getPageHeroSlides(page);
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const services = Array.isArray(page.services) ? page.services : [];
+  const heroVideo = safeImageUrl(activeSlide.video_url);
   const pageGallery = gallery.filter((item) => (item.service_slug || "car-wash") === slug);
   const pagePackages = packages.filter((item) => item.service_slug === slug);
   const quoteText = slug === "home-cleaning"
@@ -36,7 +37,11 @@ export default function ServicePage({ slug }) {
       <SiteHeader variant="service" activePage={slug} />
       <main>
         <section className="service-page-hero">
-          {safeImageUrl(activeSlide.image_url) ? (
+          {heroVideo ? (
+            <video key={activeIndex} className="service-hero-image service-hero-video" aria-label="Play CLEANSMITH service video" muted loop playsInline controls preload="none" poster={safeImageUrl(activeSlide.image_url) || "/bike.jpeg"}>
+              <source src={heroVideo} />
+            </video>
+          ) : safeImageUrl(activeSlide.image_url) ? (
             <img key={activeIndex} className="service-hero-image hero-slide-image" src={safeImageUrl(activeSlide.image_url)} alt="" aria-hidden="true" />
           ) : null}
           <div className="service-page-hero-content">

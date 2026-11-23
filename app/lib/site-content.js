@@ -11,11 +11,11 @@ export const fallbackPages = {
     callout_text:
       "Tell us your vehicle make and model, choose a package, and request a convenient time. We will confirm the final scope and price with you.",
     services: [
-      { title: "Exterior Car Wash", description: "A careful exterior clean for everyday upkeep, finished by hand at your home or workplace.", price_label: "Ask us for a quote", image_url: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=960&q=80", features: ["Pre-rinse and foam wash", "Hand wash and dry", "Glass and tyre finish"] },
-      { title: "Full Valet", description: "A thorough inside-and-out refresh for vehicles that need more than a quick wash.", price_label: "Ask us for a quote", image_url: "https://images.unsplash.com/photo-1605164599901-6f9c2c45c0c6?auto=format&fit=crop&w=960&q=80", features: ["Exterior wash and hand dry", "Cabin vacuum and surface clean", "Finishing touches for wheels and glass"] },
-      { title: "Interior Deep Clean", description: "Focused interior care for seats, carpets, mats, and high-touch cabin surfaces.", price_label: "Ask us for a quote", image_url: "https://images.unsplash.com/photo-1600320254374-ce2d293c324e?auto=format&fit=crop&w=960&q=80", features: ["Detailed vacuuming", "Targeted upholstery and carpet care", "Careful wipe-down of cabin surfaces"] },
-      { title: "Exterior Paint Care", description: "Exterior treatments to improve the finish and help protect paintwork from everyday wear.", price_label: "Ask us for a quote", image_url: "https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&w=960&q=80", features: ["Paint-safe hand wash", "Polishing options by vehicle condition", "Tyre and trim finishing"] },
-      { title: "Vehicle Detailing", description: "A tailored detail for owners who want a more comprehensive clean and finish.", price_label: "Ask us for a quote", image_url: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=960&q=80", features: ["Interior and exterior assessment", "Options matched to your vehicle", "Scope confirmed before work begins"] },
+      { title: "Exterior Car Wash", description: "A careful exterior clean for everyday upkeep, finished by hand at your home or workplace.", price_label: "From R250", image_url: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=960&q=80", features: ["Pre-rinse and foam wash", "Hand wash and dry", "Glass and tyre finish"] },
+      { title: "Full Valet", description: "A thorough inside-and-out refresh for vehicles that need more than a quick wash.", price_label: "From R500", image_url: "https://images.unsplash.com/photo-1605164599901-6f9c2c45c0c6?auto=format&fit=crop&w=960&q=80", features: ["Exterior wash and hand dry", "Cabin vacuum and surface clean", "Finishing touches for wheels and glass"] },
+      { title: "Interior Deep Clean", description: "Focused interior care for seats, carpets, mats, and high-touch cabin surfaces.", price_label: "From R200", image_url: "https://images.unsplash.com/photo-1600320254374-ce2d293c324e?auto=format&fit=crop&w=960&q=80", features: ["Detailed vacuuming", "Targeted upholstery and carpet care", "Careful wipe-down of cabin surfaces"] },
+      { title: "Exterior Paint Care", description: "Exterior treatments to improve the finish and help protect paintwork from everyday wear.", price_label: "Price confirmed for your vehicle", image_url: "https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&w=960&q=80", features: ["Paint-safe hand wash", "Polishing options by vehicle condition", "Tyre and trim finishing"] },
+      { title: "Vehicle Detailing", description: "A tailored detail for owners who want a more comprehensive clean and finish.", price_label: "Price confirmed for your vehicle", image_url: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=960&q=80", features: ["Interior and exterior assessment", "Options matched to your vehicle", "Scope confirmed before work begins"] },
     ],
   },
   "home-cleaning": {
@@ -53,6 +53,17 @@ export const fallbackPages = {
       { title: "Hedge and Shrub Trimming", description: "Shape and tidy hedges and shrubs to help keep borders neat and clear.", price_label: "Request a quote", image_url: "https://images.unsplash.com/photo-1598902108854-10e335adac99?auto=format&fit=crop&w=960&q=80", features: ["Light shaping and trimming", "Neat borders and pathways", "Green waste handling agreed in advance"] },
       { title: "Seasonal Garden Clean-up", description: "A one-off tidy-up to clear garden waste and bring outdoor spaces back into shape.", price_label: "Request a quote", image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=960&q=80", features: ["Leaf and debris clearing", "Bed and path tidy-up", "Priorities planned around your property"] },
     ],
+  },
+  "sneaker-cleaning": {
+    slug: "sneaker-cleaning",
+    hero_title: "Sneaker & Footwear Cleaning",
+    hero_subtitle: "Professional cleaning and detailing that brings your sneakers back to life.",
+    intro: "Choose an everyday refresh, premium footwear detailing, or a repair quote for your sneakers and shoes.",
+    hero_image_url: "",
+    section_title: "Sneaker-cleaning services",
+    callout_title: "Ready to refresh your sneakers?",
+    callout_text: "Book a clean or send us photos of your shoes for a repair quote.",
+    services: [],
   },
   about: {
     slug: "about",
@@ -118,6 +129,7 @@ export function getPageHeroSlides(page) {
     title: page.hero_title || "",
     subtitle: page.hero_subtitle || "",
     image_url: page.hero_image_url || "",
+    video_url: "",
     cta_text: page.hero_cta_text || "",
     cta_url: page.hero_cta_url || "",
   };
@@ -131,6 +143,7 @@ export function getPageHeroSlides(page) {
     title: slide.title || primarySlide.title,
     subtitle: slide.subtitle || primarySlide.subtitle,
     image_url: slide.image_url || "",
+    video_url: slide.video_url || "",
     cta_text: primarySlide.cta_text || slide.cta_text || "",
     cta_url: slide.cta_url || primarySlide.cta_url,
   }));

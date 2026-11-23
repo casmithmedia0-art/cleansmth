@@ -78,6 +78,11 @@ function safeImageUrl(value) {
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
 }
 
+function safeMediaUrl(value) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
+}
+
 function safeActionUrl(value, fallback) {
   const url = String(value || "").trim();
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) || /^(mailto|tel):/i.test(url) ? url : fallback;
@@ -103,27 +108,6 @@ function MembershipCards({ memberships }) {
   );
 }
 
-function WhatsAppWidget() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="wa-widget">
-      {open ? (
-        <div className="wa-panel">
-          <div className="wa-header">
-            <strong>CLEANSMITH Concierge</strong>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">×</button>
-          </div>
-          <p className="wa-msg">Hi! Ready to book or have a question? WhatsApp us below.</p>
-          <a href="https://wa.me/27717856901" target="_blank" rel="noopener noreferrer" className="btn-primary">WhatsApp us</a>
-        </div>
-      ) : null}
-      <button className="wa-closed" type="button" onClick={() => setOpen((value) => !value)} aria-label="Chat with CLEANSMITH on WhatsApp">
-        <span aria-hidden="true">✆</span><span className="pulse" />
-      </button>
-    </div>
-  );
-}
-
 export default function HomePage() {
   const { pages, packages, memberships, bookingAddons, gallery } = usePublicContent();
   const page = pages["car-wash"];
@@ -133,6 +117,7 @@ export default function HomePage() {
   const heroSlides = getPageHeroSlides(page);
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const heroImage = safeImageUrl(activeSlide.image_url);
+  const heroVideo = safeMediaUrl(activeSlide.video_url);
   const services = Array.isArray(page.services) ? page.services : [];
 
   function choosePackage(slug) {
@@ -146,10 +131,18 @@ export default function HomePage() {
       <main>
         <section className="hero" id="home">
           <div className="hero-ring" /><div className="hero-ring" /><div className="hero-ring" />
-          <div className="hero-video-wrap" aria-hidden="true" key={activeIndex}>
-            {heroImage
-              ? <img className="hero-video hero-slide-image" src={heroImage} alt="" />
-              : <video className="hero-video" autoPlay muted loop playsInline poster="/bike.jpeg"><source src="/clip1.mp4" type="video/mp4" /></video>}
+          <div className="hero-video-wrap" key={activeIndex}>
+            {heroVideo ? (
+              <video className="hero-video" aria-label="Play CLEANSMITH hero video" muted loop playsInline controls preload="none" poster={heroImage || "/bike.jpeg"}>
+                <source src={heroVideo} />
+              </video>
+            ) : heroImage ? (
+              <img className="hero-video hero-slide-image" src={heroImage} alt="" aria-hidden="true" />
+            ) : (
+              <video className="hero-video" aria-label="Play CLEANSMITH hero video" muted loop playsInline controls preload="none" poster="/bike.jpeg">
+                <source src="/clip1.mp4" type="video/mp4" />
+              </video>
+            )}
           </div>
           <div className="hero-overlay" aria-hidden="true" />
           <div className="hero-content">
@@ -168,12 +161,12 @@ export default function HomePage() {
               </div>
             </div>
             <div className="trust-badges">
-              <div className="trust-badge">1,000 Cars Detailed</div>
-              <div className="trust-badge">👨‍🔧 Qualified Technicians</div>
+              <div className="trust-badge">Careful hand-finished clean</div>
+              <div className="trust-badge">Professional service</div>
               <div className="trust-badge">🚫 No Queue</div>
               <div className="trust-badge">🚗 No Driving</div>
-              <div className="trust-badge">Eco-Friendly</div>
-              <div className="trust-badge">Same-Day Booking</div>
+              <div className="trust-badge">At your home or workplace</div>
+              <div className="trust-badge">Book by WhatsApp</div>
             </div>
           </div>
           {heroSlides.length > 1 ? (
@@ -195,6 +188,27 @@ export default function HomePage() {
           ) : null}
           <div className="scroll-ind"><span>Scroll</span><div className="scroll-dot" /></div>
         </section>
+        <section className="home-services-row" aria-labelledby="home-services-heading">
+          <div className="section-inner">
+            <div className="section-label">Our services</div>
+            <h2 className="section-title" id="home-services-heading">Care for your car, home, garden and sneakers</h2>
+            <div className="home-services-grid">
+              {[
+                { title: "Car Wash", description: "Mobile washing and detailing.", href: "/#features", number: "01" },
+                { title: "Home Cleaning", description: "Cleaning for the spaces you live in.", href: "/home-cleaning", number: "02" },
+                { title: "Gardening", description: "Practical care for outdoor spaces.", href: "/gardening", number: "03" },
+                { title: "Sneaker Cleaning", description: "Footwear cleaning, detailing and repairs.", href: "/sneaker-cleaning", number: "04" },
+              ].map((service) => (
+                <Link className="home-service-card" href={service.href} key={service.title}>
+                  <span>{service.number}</span>
+                  <h3>{service.title}</h3>
+                  <p>{service.description}</p>
+                  <strong>Explore service →</strong>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
         <div className="glow-line" />
         <section className="service-area" id="where-we-serve">
           <div className="section-inner">
@@ -202,16 +216,7 @@ export default function HomePage() {
             <h2 className="section-title">Our <span className="cyan">service area</span></h2>
             <p className="section-sub">We cover Johannesburg suburbs and beyond. Contact us for executive and long-distance bookings.</p>
             <div className="suburb-list">{suburbs.map((suburb) => <span className="pill" key={suburb}>{suburb}</span>)}</div>
-            <div className="map-contact"><a href="https://wa.me/27717856901" className="btn-secondary">Contact us on WhatsApp</a></div>
-            <div className="service-map">
-              <iframe
-                title="CLEANSMITH — Johannesburg service area"
-                src="https://www.google.com/maps?q=Johannesburg,+South+Africa&z=11&output=embed"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-              <p>Interactive map — pan and zoom to see suburbs. Contact us for executive or long-distance bookings.</p>
-            </div>
+            <div className="map-contact"><a href="https://wa.me/27717856901?text=Hi%20CLEANSMITH%2C%20do%20you%20come%20to%20my%20suburb%3F" className="btn-secondary">Do we come to you? Ask on WhatsApp</a></div>
           </div>
         </section>
         <section className="features-section" id="features">
@@ -231,8 +236,18 @@ export default function HomePage() {
           <div className="section-inner">
             <div className="section-label fade-up">Pricing</div>
             <h2 className="section-title fade-up">Choose your <span className="cyan">package</span></h2>
-            <p className="section-sub fade-up">Transparent pricing. No hidden fees. Premium results guaranteed.</p>
+            <p className="section-sub fade-up">Clear package pricing. We will confirm the final price before work starts.</p>
             <PackageCards packages={carWashPackages} selectedPackage={selectedPackage} onSelect={choosePackage} />
+          </div>
+        </section>
+        <section className="sneaker-upsell" aria-label="Sneaker cleaning add-on">
+          <div className="section-inner sneaker-upsell-inner">
+            <div>
+              <p className="section-label">Add a little extra</p>
+              <h2>Add a Classic Cleanse to any car wash booking</h2>
+              <p>Refresh your sneakers while your car gets cleaned. R100 per pair; final price confirmed before work starts.</p>
+            </div>
+            <Link href="/sneaker-cleaning" className="btn-primary">Add a sneaker clean</Link>
           </div>
         </section>
         <div className="glow-line" />
@@ -270,11 +285,26 @@ export default function HomePage() {
             <WorkGallery items={carWashGallery} />
           </div>
         </section>
+        <section className="photo-placeholders" aria-labelledby="before-after-heading">
+          <div className="section-inner">
+            <div className="section-label">Coming soon</div>
+            <h2 className="section-title" id="before-after-heading">Before &amp; after photos</h2>
+            <p className="section-sub">We are making space for real CLEANSMITH results across our services.</p>
+            <div className="photo-placeholder-grid">
+              {["Cars", "Sneakers", "Homes", "Gardens"].map((service) => (
+                <div className="photo-placeholder-card" key={service}>
+                  <span>{service}</span>
+                  <strong>Before &amp; after photos coming soon</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
       <footer id="contact">
         <div className="section-inner footer-grid">
           <div className="footer-brand">
-            <Link href="/" className="nav-logo"><img src="/caleb.png" alt="CLEANSMITH" className="nav-logo-img" /></Link>
+            <Link href="/" className="nav-logo"><img src="/cleansmith-logo.png" alt="CLEANSMITH logo" className="nav-logo-img" /></Link>
             <p>Premium mobile car wash and detailing, bringing showroom quality to your home or workplace in Johannesburg and surrounding areas.</p>
           </div>
           <div>
@@ -286,6 +316,7 @@ export default function HomePage() {
               <li><Link href="/#booking">Book now</Link></li>
               <li><Link href="/home-cleaning">Home cleaning</Link></li>
               <li><Link href="/gardening">Gardening</Link></li>
+              <li><Link href="/sneaker-cleaning">Sneaker cleaning</Link></li>
             </ul>
           </div>
           <div>
@@ -294,7 +325,8 @@ export default function HomePage() {
               <li><Link href="/about">About us</Link></li>
               <li><Link href="/#reviews">Reviews</Link></li>
               <li><Link href="/#gallery">Gallery</Link></li>
-              <li><Link href="/admin" rel="nofollow">Admin sign in</Link></li>
+              <li><Link href="/terms">Terms</Link></li>
+              <li><Link href="/privacy">Privacy</Link></li>
             </ul>
           </div>
           <div>
@@ -303,20 +335,19 @@ export default function HomePage() {
               <li><a href="tel:+27717856901">071 785 6901</a></li>
               <li>Johannesburg, Gauteng</li>
               <li><a href="mailto:info@cleansmith.co.za">info@cleansmith.co.za</a></li>
-              <li><a href="mailto:sales@cleansmith.co.za">sales@cleansmith.co.za</a></li>
+              <li>Operating hours: Daily, 07:00–17:00</li>
             </ul>
             <div className="footer-social">
-              <a href="https://www.tiktok.com/@cleansmith.carwas" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a>
               <a href="https://www.facebook.com/profile.php?id=61586060377430" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
             </div>
           </div>
         </div>
+        <p className="footer-policy">Cancellations: Please contact us as early as possible. Final price confirmed before work starts; payment details confirmed when booking.</p>
         <div className="footer-bottom">
-          <p>© 2025 CLEANSMITH Mobile Car Wash &amp; Detailing. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} CLEANSMITH Mobile Car Wash &amp; Detailing. All rights reserved.</p>
           <PoweredBy />
         </div>
       </footer>
-      <WhatsAppWidget />
     </div>
   );
 }

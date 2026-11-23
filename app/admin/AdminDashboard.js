@@ -49,7 +49,7 @@ export default function AdminDashboard() {
           <p className="status" id="dashboardStatus" role="status" />
 
           <section className="section" data-section="pages" hidden>
-            <h2>Website pages</h2><p className="section-intro">Update the hero image and call-to-action text for each page. Other page content stays unchanged.</p>
+            <h2>Website pages</h2><p className="section-intro">Update the primary hero image and add image or short video slides for each page.</p>
             <div className="layout">
               <div className="panel editor">
                 <form id="sitePageForm">
@@ -60,13 +60,14 @@ export default function AdminDashboard() {
                       <option value="car-wash">Car Wash</option>
                       <option value="home-cleaning">Home Cleaning</option>
                       <option value="gardening">Gardening</option>
+                      <option value="sneaker-cleaning">Sneaker Cleaning</option>
                       <option value="about">About Us</option>
                     </select></label>
                     <label className="full">Primary hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /><span className="muted">Clear the URL and save to remove this image.</span></label>
                     <label className="full">Or upload a hero image<input name="hero_image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
                     <div className="full hero-slides-heading"><strong>Additional hero slides</strong><button className="btn secondary" id="addHeroSlide" type="button">Add slide</button></div>
                     <div className="full hero-slides-list" id="heroSlides" />
-                    <span className="full muted">Choose an image URL or upload an image for each slide. Remove a slide and save to delete it.</span>
+                    <span className="full muted">Each slide can use an image or an MP4/WebM video up to 25 MB. Add an image URL to use it as a video poster. Videos do not autoplay and load only when played.</span>
                     <label className="full">Call-to-action text<input name="hero_cta_text" placeholder="Book now or request a quote" /></label>
                   </div>
                   <div className="item-actions"><button className="btn" type="submit">Save page</button><button className="btn secondary" type="reset">Clear</button></div>
