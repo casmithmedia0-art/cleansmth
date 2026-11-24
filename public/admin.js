@@ -7,6 +7,8 @@
   var dashboard = document.getElementById('dashboard');
   var loginStatus = document.getElementById('loginStatus');
   var dashboardStatus = document.getElementById('dashboardStatus');
+  var loginForm = document.getElementById('loginForm');
+  if (loginForm.dataset.initialized === 'true') return true;
   var client;
   var plans = [];
   var sitePages = [];
@@ -693,16 +695,13 @@
 
   if (!configured()) {
     message(loginStatus, 'Configure the Supabase project URL and anon key in supabase-config.js to enable admin sign-in.', true);
-    document.getElementById('loginForm').querySelectorAll('input,button').forEach(function (control) {
-      control.disabled = true;
-    });
-    return;
+    return false;
   }
 
   client = window.CLEANSMITH_SUPABASE_CLIENT ||
     (window.CLEANSMITH_SUPABASE_CLIENT = window.supabase.createClient(config.url, config.anonKey));
   setupDashboard();
-  document.getElementById('loginForm').addEventListener('submit', function (event) {
+  loginForm.addEventListener('submit', function (event) {
     event.preventDefault();
     message(loginStatus, 'Signing in…');
     var values = formValues(event.currentTarget);
@@ -722,6 +721,8 @@
     console.error('Unable to restore CLEANSMITH admin session:', error);
     message(loginStatus, error.message || 'Unable to restore the admin session.', true);
   });
+  loginForm.dataset.initialized = 'true';
+  return true;
   }
 
   window.CLEANSMITH_ADMIN_INIT = initializeAdmin;
