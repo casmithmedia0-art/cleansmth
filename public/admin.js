@@ -983,7 +983,7 @@
         values.hero_image_url = uploaded[uploadIndex].url;
         uploadIndex++;
       }
-      if (primaryVideoFile) {, previous.hero_video_url
+      if (primaryVideoFile) {
         values.hero_video_url = uploaded[uploadIndex].url;
         uploadIndex++;
       }
@@ -991,7 +991,7 @@
         var uploadIndexes = slideUploadIndexes[index];
         if (uploadIndexes.image >= 0) slide.image_url = uploaded[uploadIndexes.image].url;
         if (uploadIndexes.video >= 0) slide.video_url = uploaded[uploadIndexes.video].url;
-      });e_url, saved.hero_vido
+      });
       values._uploaded_paths = uploaded.map(function (item) { return item.path; });
       return values;
     });
@@ -1011,7 +1011,7 @@
   }
 
   function cleanupReplacedHeroImage(record, previous, saved) {
-    var oldUrls = [previous.current_hero_image_url];
+    var oldUrls = [previous.current_hero_image_url, previous.hero_video_url];
     var oldPage = sitePages.find(function (page) { return page.slug === saved.slug; });
     oldUrls = oldUrls.concat((oldPage && oldPage.hero_slides || []).map(function (slide) {
       return slide && slide.image_url;
@@ -1019,7 +1019,7 @@
     oldUrls = oldUrls.concat((oldPage && oldPage.hero_slides || []).map(function (slide) {
       return slide && slide.video_url;
     }));
-    var currentUrls = [saved.hero_image_url].concat((saved.hero_slides || []).map(function (slide) {
+    var currentUrls = [saved.hero_image_url, saved.hero_video_url].concat((saved.hero_slides || []).map(function (slide) {
       return slide.image_url;
     })).concat((saved.hero_slides || []).map(function (slide) {
       return slide.video_url;
@@ -1055,8 +1055,6 @@
     connectForm('packageForm', 'packages', function (values) {
       values.starting_price = number(values.starting_price);
       values.sort_order = number(values.sort_order);
-    var heroVideoUrl = sitePageForm.elements.hero_video_url;
-    var heroVideoFile = sitePageForm.elements.hero_video_file;
       values.features = lines(values.features);
       values.vehicle_prices = values.service_slug === 'car-wash' ? {
           hatch: number(values.price_hatch),
@@ -1067,18 +1065,10 @@
         } : {};
       delete values.price_hatch;
       delete values.price_sedan;
-      delete values.price_suv {
- ;      
-        heroVideoUrl.value = '';
-        heroVideoFile.value = '';
-      }
+      delete values.price_suv;
       delete values.price_luxury;
       delete values.price_minibus;
-      values.is_active = values.is_active === 'true';{
-        
-        heroVideoUrl.value = '';
-        heroVideoFile.value = '';
-      }
+      values.is_active = values.is_active === 'true';
     });
     heroVideoUrl.addEventListener('input', function () {
       if (heroVideoUrl.value) {
@@ -1107,6 +1097,8 @@
     var sitePageForm = document.getElementById('sitePageForm');
     var heroImageUrl = sitePageForm.elements.hero_image_url;
     var heroImageFile = sitePageForm.elements.hero_image_file;
+    var heroVideoUrl = sitePageForm.elements.hero_video_url;
+    var heroVideoFile = sitePageForm.elements.hero_video_file;
     document.getElementById('addHeroSlide').addEventListener('click', function () {
       var list = sitePageForm.querySelector('#heroSlides');
       appendHeroSlideEditor(list, {}, list.querySelectorAll('[data-hero-slide]').length);
@@ -1117,10 +1109,32 @@
       window.setTimeout(function () { renderHeroSlideEditors(sitePageForm, []); }, 0);
     });
     heroImageUrl.addEventListener('input', function () {
-      if (heroImageUrl.value) heroImageFile.value = '';
+      if (heroImageUrl.value) {
+        heroImageFile.value = '';
+        heroVideoUrl.value = '';
+        heroVideoFile.value = '';
+      }
     });
     heroImageFile.addEventListener('change', function () {
-      if (getFormFile(sitePageForm, 'hero_image_file')) heroImageUrl.value = '';
+      if (getFormFile(sitePageForm, 'hero_image_file')) {
+        heroImageUrl.value = '';
+        heroVideoUrl.value = '';
+        heroVideoFile.value = '';
+      }
+    });
+    heroVideoUrl.addEventListener('input', function () {
+      if (heroVideoUrl.value) {
+        heroImageUrl.value = '';
+        heroImageFile.value = '';
+        heroVideoFile.value = '';
+      }
+    });
+    heroVideoFile.addEventListener('change', function () {
+      if (getFormFile(sitePageForm, 'hero_video_file')) {
+        heroImageUrl.value = '';
+        heroImageFile.value = '';
+        heroVideoUrl.value = '';
+      }
     });
     sitePageForm.elements.slug.addEventListener('change', function (event) {
       var page = sitePages.find(function (item) { return item.slug === event.currentTarget.value; });
