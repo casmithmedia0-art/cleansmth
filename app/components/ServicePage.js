@@ -14,6 +14,11 @@ function safeImageUrl(value) {
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
 }
 
+function safeMediaUrl(value) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) ? url : "";
+}
+
 function safeActionUrl(value, fallback) {
   const url = String(value || "").trim();
   return /^https?:\/\//i.test(url) || /^\/(?!\/)/.test(url) || /^(mailto|tel):/i.test(url) ? url : fallback;
@@ -25,7 +30,7 @@ export default function ServicePage({ slug }) {
   const heroSlides = getPageHeroSlides(page);
   const { activeIndex, activeSlide, goTo, next, previous } = useHeroCarousel(heroSlides);
   const services = Array.isArray(page.services) ? page.services : [];
-  const heroVideo = safeImageUrl(activeSlide.video_url);
+  const heroVideo = safeMediaUrl(activeSlide.video_url);
   const pageGallery = gallery.filter((item) => (item.service_slug || "car-wash") === slug);
   const pagePackages = packages.filter((item) => item.service_slug === slug);
   const quoteText = slug === "home-cleaning"

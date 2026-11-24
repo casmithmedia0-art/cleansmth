@@ -898,18 +898,38 @@
 
   function prepareSitePage(values, form) {
     var primaryFile = getFormFile(form, 'hero_image_file');
+    var primaryVideoFile = getFormFile(form, 'hero_video_file');
     delete values.hero_image_file;
+    delete values.hero_video_file;
     delete values.current_hero_image_url;
     values.hero_image_url = String(values.hero_image_url || '').trim();
+    values.hero_video_url = String(values.hero_video_url || '').trim();
     values.hero_cta_text = String(values.hero_cta_text || '').trim();
     if (primaryFile && primaryFile.type.indexOf('image/') !== 0) {
       throw new Error('Choose a supported image file for the hero image.');
     }
+    if (primaryVideoFile && !/^video\/(mp4|webm)$/i.test(primaryVideoFile.type)) {
+      throw new Error('Hero videos must be MP4 or WebM files.');
+    }
+    if (primaryVideoFile && primaryVideoFile.size > 25 * 1024 * 1024) {
+      throw new Error('Hero videos must be 25 MB or smaller.');
+    }
     if (!primaryFile && values.hero_image_url && !isSafeImageUrl(values.hero_image_url)) {
       throw new Error('Enter a full image URL or a path starting with /.');
     }
+    if (!primaryVideoFile && values.hero_video_url && !isSafeMediaUrl(values.hero_video_url)) {
+      throw new Error('Enter a full video URL or a path starting with /.');
+    }
+    if (primaryFile && primaryVideoFile) {
+      throw new Error('Choose either an image or a video for the primary hero, not both.');
+    }
+    if (!primaryFile && !values.hero_image_url && !primaryVideoFile && !values.hero_video_url) {
+      throw new Error('The primary hero needs either an image or a video.');
+    }
 
-    var uploads = primaryFile ? [primaryFile] : [];
+    var uploads = [];
+    if (primaryFile) uploads.push(primaryFile);
+    if (primaryVideoFile) uploads.push(primaryVideoFile);
     var slideUploadIndexes = [];
     values.hero_slides = Array.prototype.slice.call(form.querySelectorAll('[data-hero-slide]')).map(function (editor) {
       var slide = heroSlideValues(editor);
@@ -958,12 +978,20 @@
     });
     if (!uploads.length) return values;
     return uploadFiles(uploads, 'hero').then(function (uploaded) {
-      if (primaryFile) values.hero_image_url = uploaded[0].url;
+      var uploadIndex = 0;
+      if (primaryFile) {
+        values.hero_image_url = uploaded[uploadIndex].url;
+        uploadIndex++;
+      }
+      if (primaryVideoFile) {, previous.hero_video_url
+        values.hero_video_url = uploaded[uploadIndex].url;
+        uploadIndex++;
+      }
       values.hero_slides.forEach(function (slide, index) {
         var uploadIndexes = slideUploadIndexes[index];
         if (uploadIndexes.image >= 0) slide.image_url = uploaded[uploadIndexes.image].url;
         if (uploadIndexes.video >= 0) slide.video_url = uploaded[uploadIndexes.video].url;
-      });
+      });e_url, saved.hero_vido
       values._uploaded_paths = uploaded.map(function (item) { return item.path; });
       return values;
     });
@@ -1027,6 +1055,8 @@
     connectForm('packageForm', 'packages', function (values) {
       values.starting_price = number(values.starting_price);
       values.sort_order = number(values.sort_order);
+    var heroVideoUrl = sitePageForm.elements.hero_video_url;
+    var heroVideoFile = sitePageForm.elements.hero_video_file;
       values.features = lines(values.features);
       values.vehicle_prices = values.service_slug === 'car-wash' ? {
           hatch: number(values.price_hatch),
@@ -1037,10 +1067,32 @@
         } : {};
       delete values.price_hatch;
       delete values.price_sedan;
-      delete values.price_suv;
+      delete values.price_suv {
+ ;      
+        heroVideoUrl.value = '';
+        heroVideoFile.value = '';
+      }
       delete values.price_luxury;
       delete values.price_minibus;
-      values.is_active = values.is_active === 'true';
+      values.is_active = values.is_active === 'true';{
+        
+        heroVideoUrl.value = '';
+        heroVideoFile.value = '';
+      }
+    });
+    heroVideoUrl.addEventListener('input', function () {
+      if (heroVideoUrl.value) {
+        heroImageUrl.value = '';
+        heroImageFile.value = '';
+        heroVideoFile.value = '';
+      }
+    });
+    heroVideoFile.addEventListener('change', function () {
+      if (getFormFile(sitePageForm, 'hero_video_file')) {
+        heroImageUrl.value = '';
+        heroImageFile.value = '';
+        heroVideoUrl.value = '';
+      }
       return values;
     });
     var packageForm = document.getElementById('packageForm');

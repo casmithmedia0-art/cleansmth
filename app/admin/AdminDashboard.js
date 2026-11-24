@@ -65,6 +65,8 @@ export default function AdminDashboard() {
                     </select></label>
                     <label className="full">Primary hero image URL<input name="hero_image_url" type="text" inputMode="url" placeholder="https://... or /image.jpg" /><span className="muted">Clear the URL and save to remove this image.</span></label>
                     <label className="full">Or upload a hero image<input name="hero_image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
+                    <label className="full">Primary hero video URL<input name="hero_video_url" type="text" inputMode="url" placeholder="https://... or /video.mp4" /><span className="muted">Clear the URL and save to remove this video. Videos do not autoplay.</span></label>
+                    <label className="full">Or upload a hero video (MP4 or WebM, max 25 MB)<input name="hero_video_file" type="file" accept="video/mp4,video/webm" /></label>
                     <div className="full hero-slides-heading"><strong>Additional hero slides</strong><button className="btn secondary" id="addHeroSlide" type="button">Add slide</button></div>
                     <div className="full hero-slides-list" id="heroSlides" />
                     <span className="full muted">Each slide can use an image or an MP4/WebM video up to 25 MB. Add an image URL to use it as a video poster. Videos do not autoplay and load only when played.</span>

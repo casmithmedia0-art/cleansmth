@@ -156,6 +156,8 @@ alter table public.site_pages
 alter table public.site_pages
   add column if not exists hero_image_url text not null default '';
 alter table public.site_pages
+  add column if not exists hero_video_url text not null default '';
+alter table public.site_pages
   add column if not exists hero_cta_text text not null default '';
 alter table public.site_pages
   add column if not exists hero_cta_url text not null default '';

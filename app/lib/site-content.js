@@ -6,6 +6,7 @@ export const fallbackPages = {
     intro:
       "Choose from regular hand washing, complete valets, deep interior cleaning, exterior paint care, and detailed vehicle treatments. We come to your home or workplace, so your car gets careful attention without the queues.",
     hero_image_url: "",
+    hero_video_url: "",
     section_title: "Car-wash services",
     callout_title: "We bring the clean to you",
     callout_text:
@@ -24,6 +25,7 @@ export const fallbackPages = {
     hero_subtitle: "A cleaner, more comfortable home without giving up your day.",
     intro:
       "From regular upkeep to focused deep cleans, choose the home-cleaning help that fits your space. Share the size of your home and what needs attention so we can confirm the right service and quote.",
+    hero_video_url: "",
     hero_image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1600&q=80",
     section_title: "Home-cleaning services",
     callout_title: "A clean home, made simple",
@@ -43,6 +45,7 @@ export const fallbackPages = {
     intro:
       "Book help with routine upkeep or a one-off tidy-up. Tell us about your garden, access, and the work you have in mind so the team can plan the right visit.",
     hero_image_url: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1600&q=80",
+    hero_video_url: "",
     section_title: "Gardening services",
     callout_title: "Let us take care of the garden",
     callout_text:
@@ -57,6 +60,7 @@ export const fallbackPages = {
   "sneaker-cleaning": {
     slug: "sneaker-cleaning",
     hero_title: "Sneaker & Footwear Cleaning",
+    hero_video_url: "",
     hero_subtitle: "Professional cleaning and detailing that brings your sneakers back to life.",
     intro: "Choose an everyday refresh, premium footwear detailing, or a repair quote for your sneakers and shoes.",
     hero_image_url: "",
@@ -133,12 +137,12 @@ export function getPageHeroSlides(page) {
     title: page.hero_title || "",
     subtitle: page.hero_subtitle || "",
     image_url: page.hero_image_url || "",
-    video_url: "",
+    video_url: page.hero_video_url || "",
     cta_text: page.hero_cta_text || "",
     cta_url: page.hero_cta_url || "",
   };
   const slides = [
-    ...(primarySlide.image_url ? [primarySlide] : []),
+    ...(primarySlide.image_url || primarySlide.video_url ? [primarySlide] : []),
     ...additionalSlides,
   ];
   if (!slides.length) slides.push(primarySlide);
