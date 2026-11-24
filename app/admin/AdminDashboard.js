@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import Script from "next/script";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import PoweredBy from "../components/PoweredBy";
 
 export default function AdminDashboard() {
-  const initializeAdmin = useCallback(() => {
-    if (window.CLEANSMITH_ADMIN_INIT) window.CLEANSMITH_ADMIN_INIT();
-  }, []);
+  const [ready, setReady] = useState(false);
 
   const reportScriptError = useCallback(() => {
     const status = document.getElementById("loginStatus");
@@ -18,6 +16,14 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const initializeAdmin = useCallback(() => {
+    try {
+      setReady(window.CLEANSMITH_ADMIN_INIT() === true);
+    } catch {
+      reportScriptError();
+    }
+  }, [reportScriptError]);
+
   return (
     <>
       <main id="admin-page" className="admin-page">
@@ -25,11 +31,12 @@ export default function AdminDashboard() {
           <p className="muted">CLEANSMITH • ADMIN</p>
           <h1>Sign in to manage your site</h1>
           <p className="muted">Manage service pages and packages, the About team, VIP plans, member records, and work media.</p>
-          <form id="loginForm">
-            <label>Email<input name="email" type="email" autoComplete="username" required /></label>
-            <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
-            <button className="btn" type="submit">Sign in</button>
+          <form id="loginForm" method="post" onSubmit={(event) => event.preventDefault()}>
+            <label>Email<input name="email" type="email" autoComplete="username" disabled={!ready} required /></label>
+            <label>Password<input name="password" type="password" autoComplete="current-password" disabled={!ready} required /></label>
+            <button className="btn" type="submit" disabled={!ready}>Sign in</button>
           </form>
+          <noscript>Enable JavaScript to sign in to the dashboard.</noscript>
           <p className="status" id="loginStatus" role="status" />
         </section>
 
